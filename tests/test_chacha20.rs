@@ -59,7 +59,6 @@ fn test_block() {
     assert_eq!(serialised[..], expected_serialised[..]);
 }
 
-
 fn enc_dec_test(m: &[u8], key: [u8; 32], iv: [u8; 12]) {
     let c = chacha(key, iv, m).unwrap();
     let m_dec = match chacha(key, iv, &c) {
@@ -98,7 +97,7 @@ fn kat_test(m: &[u8], key: [u8; 32], iv: [u8; 12], exp_cipher: &[u8], valid: boo
 fn test_enc_dec() {
     random_bytes!(key, 32);
     random_bytes!(iv, 12);
-    let m: Vec<u8>   = get_random_bytes(40);
+    let m: Vec<u8> = get_random_bytes(40);
     enc_dec_test(&m, key, iv);
 }
 

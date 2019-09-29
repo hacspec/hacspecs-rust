@@ -1,17 +1,20 @@
 use hacspec::*;
 
+hacspec_imports!();
+
 type State = [u32; 16];
 type Key = [u8; 32];
 type IV = [u8; 12];
+// bytes!(IV, 12);
 
 pub fn state_to_bytes(x: State) -> [u8; 64] {
     let mut r: [u8; 64] = [0; 64];
     for i in 0..x.len() {
-        let bytes = from_u32l(x[i]);
-        r[i * 4] = bytes.3;
-        r[i * 4 + 1] = bytes.2;
-        r[i * 4 + 2] = bytes.1;
-        r[i * 4 + 3] = bytes.0;
+        let bytes = Bytes::from_u32l(x[i]);
+        r[i * 4] = bytes[3];
+        r[i * 4 + 1] = bytes[2];
+        r[i * 4 + 2] = bytes[1];
+        r[i * 4 + 3] = bytes[0];
     }
     r
 }
@@ -25,25 +28,23 @@ fn line(a: usize, b: usize, d: usize, s: usize, m: State) -> State {
 }
 
 pub fn quarter_round(a: usize, b: usize, c: usize, d: usize, m: State) -> State {
-    let mut state = m;
-    state = line(a, b, d, 16, state);
-    state = line(c, d, b, 12, state);
-    state = line(a, b, d, 8, state);
-    state = line(c, d, b, 7, state);
+    let state = line(a, b, d, 16, m);
+    let state = line(c, d, b, 12, state);
+    let state = line(a, b, d, 8, state);
+    let state = line(c, d, b, 7, state);
     state
 }
 
 fn double_round(m: State) -> State {
-    let mut state = m;
-    state = quarter_round(0, 4, 8, 12, state);
-    state = quarter_round(1, 5, 9, 13, state);
-    state = quarter_round(2, 6, 10, 14, state);
-    state = quarter_round(3, 7, 11, 15, state);
+    let state = quarter_round(0, 4, 8, 12, m);
+    let state = quarter_round(1, 5, 9, 13, state);
+    let state = quarter_round(2, 6, 10, 14, state);
+    let state = quarter_round(3, 7, 11, 15, state);
 
-    state = quarter_round(0, 5, 10, 15, state);
-    state = quarter_round(1, 6, 11, 12, state);
-    state = quarter_round(2, 7, 8, 13, state);
-    state = quarter_round(3, 4, 9, 14, state);
+    let state = quarter_round(0, 5, 10, 15, state);
+    let state = quarter_round(1, 6, 11, 12, state);
+    let state = quarter_round(2, 7, 8, 13, state);
+    let state = quarter_round(3, 4, 9, 14, state);
     state
 }
 
