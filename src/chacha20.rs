@@ -6,11 +6,11 @@ hacspec_imports!();
 
 // These are type aliases for convenience
 type State = [u32; 16];
-type Key = [u8; 32];
-type IV = [u8; 12];
 
 // These are actual types; fixed-length arrays.
 bytes!(StateBytes, 64);
+bytes!(IV, 12);
+bytes!(Key, 32);
 
 pub fn state_to_bytes(x: State) -> StateBytes {
     let mut r = StateBytes::new();
@@ -59,9 +59,9 @@ pub fn block_init(key: Key, ctr: u32, iv: IV) -> State {
         0x3320646e,
         0x79622d32,
         0x6b206574,
-        to_u32l(&key[0..4]),
-        to_u32l(&key[4..8]),
-        to_u32l(&key[8..12]),
+        u32::from_le_bytes(key.word(0)),
+        u32::from_le_bytes(key.word(4)),
+        u32::from_le_bytes(key.word(8)),
         to_u32l(&key[12..16]),
         to_u32l(&key[16..20]),
         to_u32l(&key[20..24]),
@@ -69,7 +69,7 @@ pub fn block_init(key: Key, ctr: u32, iv: IV) -> State {
         to_u32l(&key[28..32]),
         ctr,
         to_u32l(&iv[0..4]),
-        to_u32l(&iv[4..8]),
+        u32::from_le_bytes(iv.word(4)),
         to_u32l(&iv[8..12]),
     ];
     state
