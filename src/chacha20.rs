@@ -1,14 +1,19 @@
+// Import all hacspec definitions.
 use hacspec::*;
-
 hacspec_imports!();
 
+// Type definitions for use in chacha.
+
+// These are type aliases for convenience
 type State = [u32; 16];
 type Key = [u8; 32];
 type IV = [u8; 12];
-// bytes!(IV, 12);
 
-pub fn state_to_bytes(x: State) -> [u8; 64] {
-    let mut r: [u8; 64] = [0; 64];
+// These are actual types; fixed-length arrays.
+bytes!(StateBytes, 64);
+
+pub fn state_to_bytes(x: State) -> StateBytes {
+    let mut r = StateBytes::new();
     for i in 0..x.len() {
         let bytes = Bytes::from_u32l(x[i]);
         r[i * 4] = bytes[3];
@@ -82,18 +87,17 @@ pub fn block_inner(key: Key, ctr: u32, iv: IV) -> State {
     state
 }
 
-fn block(key: Key, ctr: u32, iv: IV) -> [u8; 64] {
+fn block(key: Key, ctr: u32, iv: IV) -> StateBytes {
     let state = block_inner(key, ctr, iv);
     state_to_bytes(state)
 }
 
-pub fn chacha(key: Key, iv: IV, m: &[u8]) -> Result<Vec<u8>, String> {
+pub fn chacha(key: Key, iv: IV, m: Bytes) -> Result<Bytes, String> {
     let l = m.len();
     let n_blocks: usize = l / 64; // TODO: floor
     let rem = l % 64;
     let mut ctr = 1;
-    let mut blocks_out = Vec::new();
-    blocks_out.extend_from_slice(m);
+    let mut blocks_out = Bytes::new_len(l);
     for i in 0..n_blocks {
         let key_block = block(key, ctr, iv);
         for j in 0..64 {
