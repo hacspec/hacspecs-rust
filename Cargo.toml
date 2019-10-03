@@ -8,6 +8,10 @@ edition = "2018"
 
 [dependencies]
 hacspec = "0.1.1"
+# TODO: can we get rid of these two?
+abstract_integers = "0.1"
+num = "0.2"
 
 [patch.crates-io]
 hacspec = { path = "../hacspec-rust" }
+abstract_integers = { path = "../rust-abstract-integers" }

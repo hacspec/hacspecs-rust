@@ -87,7 +87,7 @@ pub fn block_inner(key: Key, ctr: u32, iv: IV) -> State {
     state
 }
 
-fn block(key: Key, ctr: u32, iv: IV) -> StateBytes {
+pub fn block(key: Key, ctr: u32, iv: IV) -> StateBytes {
     let state = block_inner(key, ctr, iv);
     state_to_bytes(state)
 }

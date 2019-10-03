@@ -6,3 +6,4 @@
 extern crate hacspec;
 
 pub mod chacha20;
+pub mod poly1305;
