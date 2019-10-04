@@ -8,9 +8,11 @@ edition = "2018"
 
 [dependencies]
 hacspec = "0.1.1"
-# TODO: can we get rid of these two?
+# TODO: can we get rid of these?
 abstract_integers = "0.1"
 num = "0.2"
+syn = "0.14"
+quote = "0.6"
 
 [patch.crates-io]
 hacspec = { path = "../hacspec-rust" }

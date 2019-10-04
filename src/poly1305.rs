@@ -1,6 +1,10 @@
 // Import all hacspec definitions.
 use hacspec::*;
-hacspec_imports!();
+// hacspec_imports!();
+// TODO: simplify
+extern crate uint;
+use self::uint::*;
+use std::{fmt, cmp::PartialEq};
 
 // Import chacha20
 use crate::chacha20;
@@ -9,28 +13,30 @@ use crate::chacha20::*;
 // Type definitions for use in poly1305.
 
 // These are type aliases for convenience
-type Subblock = [u8; 16];
+type Block = [u8; 16];
 
 // These are actual types; fixed-length arrays.
-bytes!(Block, 16);
 bytes!(Tag, 16);
 
 const BLOCKSIZE: usize = 16;
 
 // Define the field mod 2^130-5
-define_abstract_integer_checked!(OneThreeOne, 260);
-define_refined_modular_integer!(
-    FieldElement,
-    OneThreeOne,
-    OneThreeOne::pow2(130) - OneThreeOne::from_literal(5)
-);
+// define_abstract_integer_checked!(OneThreeOne, 260);
+// define_refined_modular_integer!(
+//     FieldElement,
+//     OneThreeOne,
+//     OneThreeOne::pow2(130) - OneThreeOne::from_literal(5)
+// );
+#[field(3fffffffffffffffffffffffffffffffb)]
+struct FieldElement;
+
 
 fn key_gen(key: Key, iv: IV) -> Key {
     let block = chacha20::block(key, 0, iv);
     Key::from_slice(&block[0..32])
 }
 
-fn encode_r(r: Subblock) -> FieldElement {
+fn encode_r(r: Block) -> FieldElement {
     let r_uint = u128::from_le_bytes(r);
     let r_uint = r_uint & 0x0ffffffc0ffffffc0ffffffc0fffffffu128;
     FieldElement::from_literal(r_uint)
