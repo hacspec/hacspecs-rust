@@ -1,4 +1,4 @@
-// Import all hacspec definitions.
+// Import hacspec and all needed definitions.
 use hacspec::*;
 hacspec_imports!();
 
