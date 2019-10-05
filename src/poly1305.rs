@@ -54,8 +54,14 @@ pub fn poly(m: Bytes, key: Key) -> Tag {
     let r_elem = encode_r(r);
     let a = poly_inner(m, r_elem);
     let n = a + s_elem;
-    let n_bytes = n.to_bytes_le();
-    Tag::from_slice(&n_bytes[0..min(16, n_bytes.len())])
+    // Note that n might be less than 16 byte -> zero-pad
+    // TODO: this isn't nice...
+    let n = n.to_bytes_le();
+    let mut n_bytes = [0u8; 16];
+    for i in 0..min(16, n.len()) {
+        n_bytes[i] = n[i];
+    }
+    Tag::from_slice(&n_bytes[0..16])
 }
 
 pub fn poly_mac(m: Bytes, key: Key, iv: IV) -> Tag {
