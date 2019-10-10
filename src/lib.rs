@@ -7,6 +7,7 @@
 extern crate hacspec;
 hacspec::hacspec_crates!();
 
+pub mod blake2b;
 pub mod chacha20;
 pub mod chacha20poly1305;
 pub mod poly1305;

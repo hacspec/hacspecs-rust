@@ -45,7 +45,13 @@ pub fn encrypt(key: Key, iv: IV, aad: Bytes, msg: Bytes) -> Result<(Bytes, Tag),
     Ok((cipher_text, tag))
 }
 
-pub fn decrypt(key: Key, iv: IV, aad: Bytes, cipher_text: Bytes, tag: Tag) -> Result<Bytes, String> {
+pub fn decrypt(
+    key: Key,
+    iv: IV,
+    aad: Bytes,
+    cipher_text: Bytes,
+    tag: Tag,
+) -> Result<Bytes, String> {
     let key_block = block(key, 0, iv);
     let mac_key = Key::from_slice(&key_block[0..32]);
     let padded_msg = pad_aad_msg(aad, &cipher_text);
