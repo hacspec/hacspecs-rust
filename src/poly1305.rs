@@ -6,15 +6,15 @@ hacspec_imports!();
 use crate::chacha20;
 use crate::chacha20::*;
 
+const BLOCKSIZE: usize = 16;
 // Type definitions for use in poly1305.
 
 // These are type aliases for convenience
-type Block = [u8; 16];
+type Block = [u8; BLOCKSIZE];
 
 // These are actual types; fixed-length arrays.
-bytes!(Tag, 16);
+bytes!(Tag, BLOCKSIZE);
 
-const BLOCKSIZE: usize = 16;
 
 // Define the Poly1305 field and field elements.
 #[field(3fffffffffffffffffffffffffffffffb)]
