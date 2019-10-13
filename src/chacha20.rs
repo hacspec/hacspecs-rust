@@ -24,9 +24,10 @@ pub fn state_to_bytes(x: State) -> StateBytes {
     r
 }
 
+#[wrappit]
 fn line(a: usize, b: usize, d: usize, s: usize, m: State) -> State {
     let mut state = m;
-    state[a] = state[a].wrapping_add(state[b]);
+    state[a] = state[a] + state[b];
     state[d] = state[d] ^ state[a];
     state[d] = state[d] << s | state[d] >> (32 - s);
     state
@@ -59,22 +60,23 @@ pub fn block_init(key: Key, ctr: u32, iv: IV) -> State {
         0x3320646e,
         0x79622d32,
         0x6b206574,
-        u32::from_le_bytes(key.word(0)),
-        u32::from_le_bytes(key.word(4)),
-        u32::from_le_bytes(key.word(8)),
-        to_u32l(&key[12..16]),
-        to_u32l(&key[16..20]),
-        to_u32l(&key[20..24]),
-        to_u32l(&key[24..28]),
-        to_u32l(&key[28..32]),
+        u32::from_le_bytes(key.get(0..4)),
+        u32::from_le_bytes(key.get(4..8)),
+        u32::from_le_bytes(key.get(8..12)),
+        u32::from_le_bytes(key.get(12..16)),
+        u32::from_le_bytes(key.get(16..20)),
+        u32::from_le_bytes(key.get(20..24)),
+        u32::from_le_bytes(key.get(24..28)),
+        u32::from_le_bytes(key.get(28..32)),
         ctr,
-        to_u32l(&iv[0..4]),
-        u32::from_le_bytes(iv.word(4)),
-        to_u32l(&iv[8..12]),
+        u32::from_le_bytes(iv.get(0..4)),
+        u32::from_le_bytes(iv.get(4..8)),
+        u32::from_le_bytes(iv.get(8..12)),
     ];
     state
 }
 
+#[wrappit]
 pub fn block_inner(key: Key, ctr: u32, iv: IV) -> State {
     let st = block_init(key, ctr, iv);
     let mut state = st;
@@ -82,7 +84,7 @@ pub fn block_inner(key: Key, ctr: u32, iv: IV) -> State {
         state = double_round(state);
     }
     for i in 0..16 {
-        state[i] = state[i].wrapping_add(st[i]);
+        state[i] = state[i] + st[i];
     }
     state
 }
@@ -94,7 +96,7 @@ pub fn block(key: Key, ctr: u32, iv: IV) -> StateBytes {
 
 pub fn chacha(key: Key, iv: IV, m: Bytes) -> Result<Bytes, String> {
     let l = m.len();
-    let n_blocks: usize = l / 64; // TODO: floor
+    let n_blocks: usize = l / 64;
     let rem = l % 64;
     let mut ctr = 1;
     let mut blocks_out = Bytes::new_len(l);
