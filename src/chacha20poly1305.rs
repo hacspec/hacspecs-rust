@@ -21,18 +21,22 @@ fn pad_aad_msg(aad: Bytes, msg: &Bytes) -> Bytes {
         pad_msg = lmsg;
     }
     let mut padded_msg = aad;
-    // TODO: way to complicated
-    padded_msg.extend(Bytes::from_vec(vec![0u8; pad_aad - laad]));
+    // TODO: still too complicated
+    for _ in 0..(pad_aad - laad) {
+        padded_msg.push(0);
+    }
     padded_msg.extend(msg.clone());
-    padded_msg.extend(Bytes::from_vec(vec![0u8; pad_msg - lmsg]));
-    padded_msg.extend(Bytes::from_array(&(laad as u64).to_le_bytes()));
-    padded_msg.extend(Bytes::from_array(&(lmsg as u64).to_le_bytes()));
+    for _ in 0..(pad_msg - lmsg) {
+        padded_msg.push(0);
+    }
+    padded_msg.extend_from_slice(&(laad as u64).to_le_bytes());
+    padded_msg.extend_from_slice(&(lmsg as u64).to_le_bytes());
     padded_msg
 }
 
 pub fn encrypt(key: Key, iv: IV, aad: Bytes, msg: Bytes) -> Result<(Bytes, Tag), String> {
     let key_block = block(key, 0, iv);
-    let mac_key = Key::from_slice(&key_block[0..32]);
+    let mac_key = Key::from(&key_block[0..32]);
     let cipher_text = match chacha(key, iv, msg) {
         Ok(c) => c,
         Err(r) => {
@@ -53,7 +57,7 @@ pub fn decrypt(
     tag: Tag,
 ) -> Result<Bytes, String> {
     let key_block = block(key, 0, iv);
-    let mac_key = Key::from_slice(&key_block[0..32]);
+    let mac_key = Key::from(&key_block[0..32]);
     let padded_msg = pad_aad_msg(aad, &cipher_text);
     let my_tag = poly(padded_msg, mac_key);
     if my_tag == tag {
