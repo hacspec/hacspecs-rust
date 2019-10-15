@@ -21,25 +21,24 @@ struct FieldElement;
 
 fn key_gen(key: Key, iv: IV) -> Key {
     let block = chacha20::block(key, 0, iv);
-    Key::from_slice(&block[0..32])
+    Key::from(&block[0..32])
 }
 
 fn encode_r(r: Block) -> FieldElement {
     let r_uint = u128::from_le_bytes(r);
-    let r_uint = r_uint & 0x0ffffffc0ffffffc0ffffffc0fffffffu128;
-    FieldElement::from_literal(r_uint)
+    let r_uint = r_uint & 0x0ffffffc0ffffffc0ffffffc0fffffff;
+    FieldElement::from(r_uint)
 }
 
-// TODO: to_u128l isn't cool
 fn encode(block: Bytes) -> FieldElement {
-    let w_elem = FieldElement::from_literal(block.to_u128l());
+    let w_elem = FieldElement::from(block.to_le_uint());
     let l_elem = FieldElement::pow2(8 * block.len());
     w_elem + l_elem
 }
 
 fn poly_inner(m: Bytes, r: FieldElement) -> FieldElement {
     let blocks = m.split(BLOCKSIZE);
-    let mut acc = FieldElement::from_literal(0);
+    let mut acc = FieldElement::from(0);
     for b in blocks {
         acc = (acc + encode(b)) * r;
     }
@@ -49,18 +48,14 @@ fn poly_inner(m: Bytes, r: FieldElement) -> FieldElement {
 pub fn poly(m: Bytes, key: Key) -> Tag {
     let r = to_array(&key[0..BLOCKSIZE]);
     let s = to_array(&key[BLOCKSIZE..2 * BLOCKSIZE]);
-    let s_elem = FieldElement::from_literal(u128::from_le_bytes(s));
+    let s_elem = FieldElement::from(u128::from_le_bytes(s));
     let r_elem = encode_r(r);
     let a = poly_inner(m, r_elem);
     let n = a + s_elem;
-    // Note that n might be less than 16 byte -> zero-pad
-    // TODO: this isn't nice...
+    // Note that n might be less than 16 byte -> zero-pad; but might also be
+    // larger than Tag::capacity().
     let n = n.to_bytes_le();
-    let mut n_bytes = [0u8; 16];
-    for i in 0..min(16, n.len()) {
-        n_bytes[i] = n[i];
-    }
-    Tag::from_slice(&n_bytes[0..16])
+    Tag::from_slice_lazy(&n)
 }
 
 pub fn poly_mac(m: Bytes, key: Key, iv: IV) -> Tag {

@@ -14,5 +14,7 @@ wrapping_arithmetic = "0.1"
 
 [patch.crates-io]
 hacspec = { git = "https://github.com/hacspec/hacspec-rust" }
+# hacspec = { path = "../hacspec-rust" }
 abstract_integers = { git = "https://github.com/franziskuskiefer/rust-abstract-integers", branch = "dev"}
+# abstract_integers = { path = "../rust-abstract-integers" }
 wrapping_arithmetic = { git = "https://github.com/franziskuskiefer/wrapping-arithmetic" }

@@ -3,9 +3,9 @@ use hacspec::*;
 hacspec_imports!();
 
 type IV = [u64; 8];
-type Counter = [U64w; 2];
-type Digest = [u8; 64];
+type Counter = [u64; 2];
 bytes!(Buffer, 128);
+bytes!(Digest, 64);
 
 static SIGMA: [[usize; 16]; 12] = [
     [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
@@ -33,44 +33,31 @@ static IV: IV = [
     0x5be0cd19137e2179u64,
 ];
 
+#[wrappit]
 fn mix(v: [u64; 16], a: usize, b: usize, c: usize, d: usize, x: u64, y: u64) -> [u64; 16] {
     let mut result = v;
-    result[a] = result[a].wrapping_add(result[b]).wrapping_add(x);
+    result[a] = result[a] + result[b] + x;
     result[d] = (result[d] ^ result[a]).rotate_right(32);
 
-    result[c] = result[c].wrapping_add(result[d]);
+    result[c] = result[c] + result[d];
     result[b] = (result[b] ^ result[c]).rotate_right(24);
 
-    result[a] = result[a].wrapping_add(result[b]).wrapping_add(y);
+    result[a] = result[a] + result[b] + y;
     result[d] = (result[d] ^ result[a]).rotate_right(16);
 
-    result[c] = result[c].wrapping_add(result[d]);
+    result[c] = result[c] + result[d];
     result[b] = (result[b] ^ result[c]).rotate_right(63);
 
     result
 }
 
-fn inc_counter(t: Counter, x: U64w) -> Counter {
-    let mut result: Counter = [0u64.into(); 2];
+// TODO: add test case where counter wraps
+#[wrappit]
+fn inc_counter(t: Counter, x: u64) -> Counter {
+    let mut result: Counter = [0u64; 2];
     result[0] = t[0] + x;
     if result[0] < x {
-        let foo: U64w = 1u64.into();
-        result[1] = t[1] + foo;
-    }
-    result
-}
-
-fn make_u8array(h: [u64; 8]) -> Digest {
-    let mut result: [u8; 64] = [0; 64];
-    for i in (0..8).rev() {
-        result[0 + (i * 8)] = (h[i] & 0xFFu64) as u8;
-        result[1 + (i * 8)] = ((h[i] & 0xFF00u64) >> 8) as u8;
-        result[2 + (i * 8)] = ((h[i] & 0xFF0000u64) >> 16) as u8;
-        result[3 + (i * 8)] = ((h[i] & 0xFF000000u64) >> 24) as u8;
-        result[4 + (i * 8)] = ((h[i] & 0xFF00000000u64) >> 32) as u8;
-        result[5 + (i * 8)] = ((h[i] & 0xFF0000000000u64) >> 40) as u8;
-        result[6 + (i * 8)] = ((h[i] & 0xFF000000000000u64) >> 48) as u8;
-        result[7 + (i * 8)] = ((h[i] & 0xFF00000000000000u64) >> 56) as u8;
+        result[1] = t[1] + 1;
     }
     result
 }
@@ -133,11 +120,11 @@ pub fn blake2b(data: Bytes) -> Digest {
     // This only supports the 512 version without key.
     h[0] = h[0] ^ 0x01010000 ^ 64;
 
-    let mut t: Counter = [0u64.into(); 2];
+    let mut t: Counter = [0; 2];
     let blocks = data.len() / 128;
     for i in 0..blocks {
-        let m = Buffer::from_slice(&data[0 + i * 128..0 + i * 128 + 128]);
-        t = inc_counter(t, 128u64.into());
+        let m = Buffer::from(&data[0 + i * 128..0 + i * 128 + 128]);
+        t = inc_counter(t, 128);
         h = compress(h, m, t, false);
     }
 
@@ -145,14 +132,12 @@ pub fn blake2b(data: Bytes) -> Digest {
     let mut m = Buffer::new();
     let remaining_bytes = data.len() - 128 * blocks;
     let remaining_start = data.len() - remaining_bytes;
-    t = inc_counter(t, remaining_bytes.into());
+    t = inc_counter(t, remaining_bytes as u64);
     let mut j = 0;
     for i in remaining_start..(remaining_start + remaining_bytes) {
         m[j] = data[i];
         j += 1;
     }
     h = compress(h, m, t, true);
-
-    // Make h little endian u8 array and return.
-    make_u8array(h)
+    h.into()
 }
