@@ -29,7 +29,9 @@ fn line(a: usize, b: usize, d: usize, s: usize, m: State) -> State {
     let mut state = m;
     state[a] = state[a] + state[b];
     state[d] = state[d] ^ state[a];
-    state[d] = state[d] << s | state[d] >> (32 - s);
+    // TODO: The 32 here is interpreted as i32 on Linux (not on Windows),
+    //       where .wrapping_sub is not defined.
+    state[d] = state[d] << s | state[d] >> (32usize - s);
     state
 }
 
