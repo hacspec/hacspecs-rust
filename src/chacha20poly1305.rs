@@ -12,14 +12,16 @@ use poly1305::*;
 fn pad_aad_msg(aad: Bytes, msg: &Bytes) -> Bytes {
     let laad = aad.len();
     let lmsg = msg.len();
-    let mut pad_aad = 16 * ((laad >> 4) + 1);
-    if laad % 16 == 0 {
-        pad_aad = laad;
-    }
-    let mut pad_msg = 16 * ((lmsg >> 4) + 1);
-    if lmsg % 16 == 0 {
-        pad_msg = lmsg;
-    }
+    let pad_aad = if laad % 16 == 0 {
+        laad
+    } else {
+        16 * ((laad >> 4) + 1)
+    };
+    let pad_msg = if lmsg % 16 == 0 {
+        lmsg
+    } else {
+        16 * ((lmsg >> 4) + 1)
+    };
     let mut padded_msg = aad;
     // TODO: still too complicated
     for _ in 0..(pad_aad - laad) {

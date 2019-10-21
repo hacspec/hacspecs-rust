@@ -23,14 +23,14 @@ static SIGMA: [[usize; 16]; 12] = [
 ];
 
 static IV: IV = [
-    0x6a09e667f3bcc908u64,
-    0xbb67ae8584caa73bu64,
-    0x3c6ef372fe94f82bu64,
-    0xa54ff53a5f1d36f1u64,
-    0x510e527fade682d1u64,
-    0x9b05688c2b3e6c1fu64,
-    0x1f83d9abfb41bd6bu64,
-    0x5be0cd19137e2179u64,
+    0x6a09_e667_f3bc_c908u64,
+    0xbb67_ae85_84ca_a73bu64,
+    0x3c6e_f372_fe94_f82bu64,
+    0xa54f_f53a_5f1d_36f1u64,
+    0x510e_527f_ade6_82d1u64,
+    0x9b05_688c_2b3e_6c1fu64,
+    0x1f83_d9ab_fb41_bd6bu64,
+    0x5be0_cd19_137e_2179u64,
 ];
 
 #[wrappit]
@@ -65,14 +65,14 @@ fn inc_counter(t: Counter, x: u64) -> Counter {
 fn make_u64array(h: Buffer) -> [u64; 16] {
     let mut result: [u64; 16] = [0; 16];
     for i in 0..16 {
-        result[i] = h[0 + 8 * i] as u64
-            | (h[1 + 8 * i] as u64) << 8
-            | (h[2 + 8 * i] as u64) << 16
-            | (h[3 + 8 * i] as u64) << 24
-            | (h[4 + 8 * i] as u64) << 32
-            | (h[5 + 8 * i] as u64) << 40
-            | (h[6 + 8 * i] as u64) << 48
-            | (h[7 + 8 * i] as u64) << 56;
+        result[i] = u64::from(h[8 * i])
+            | u64::from(h[1 + 8 * i]) << 8
+            | u64::from(h[2 + 8 * i]) << 16
+            | u64::from(h[3 + 8 * i]) << 24
+            | u64::from(h[4 + 8 * i]) << 32
+            | u64::from(h[5 + 8 * i]) << 40
+            | u64::from(h[6 + 8 * i]) << 48
+            | u64::from(h[7 + 8 * i]) << 56;
     }
     result
 }
@@ -84,14 +84,18 @@ fn compress(h: [u64; 8], m: Buffer, t: Counter, last_block: bool) -> [u64; 8] {
     let m = make_u64array(m);
 
     // Prepare.
-    for i in 0..8 {
-        v[i] = h[i];
-        v[i + 8] = IV[i];
-    }
-    let foo0: u64 = t[0].into();
-    let foo1: u64 = t[1].into();
-    v[12] = v[12] ^ foo0;
-    v[13] = v[13] ^ foo1;
+    v[0..8].clone_from_slice(&h[..]);
+    v[8..16].clone_from_slice(&IV[..]);
+    // TODO: This is equivalent to the following but the idiomatic way of doing it.
+    //       Do we want to allow both?
+    // for i in 0..8 {
+    //     v[i] = h[i];
+    //     v[i + 8] = IV[i];
+    // }
+    let foo0: u64 = t[0];
+    let foo1: u64 = t[1];
+    v[12] ^= foo0;
+    v[13] ^= foo1;
     if last_block {
         v[14] = !v[14];
     }
@@ -118,12 +122,12 @@ fn compress(h: [u64; 8], m: Buffer, t: Counter, last_block: bool) -> [u64; 8] {
 pub fn blake2b(data: Bytes) -> Digest {
     let mut h = IV;
     // This only supports the 512 version without key.
-    h[0] = h[0] ^ 0x01010000 ^ 64;
+    h[0] = h[0] ^ 0x0101_0000 ^ 64;
 
     let mut t: Counter = [0; 2];
     let blocks = data.len() / 128;
     for i in 0..blocks {
-        let m = Buffer::from(&data[0 + i * 128..0 + i * 128 + 128]);
+        let m = Buffer::from(&data[i * 128..i * 128 + 128]);
         t = inc_counter(t, 128);
         h = compress(h, m, t, false);
     }
@@ -133,10 +137,8 @@ pub fn blake2b(data: Bytes) -> Digest {
     let remaining_bytes = data.len() - 128 * blocks;
     let remaining_start = data.len() - remaining_bytes;
     t = inc_counter(t, remaining_bytes as u64);
-    let mut j = 0;
-    for i in remaining_start..(remaining_start + remaining_bytes) {
+    for (j, i) in (remaining_start..(remaining_start + remaining_bytes)).enumerate() {
         m[j] = data[i];
-        j += 1;
     }
     h = compress(h, m, t, true);
     h.into()

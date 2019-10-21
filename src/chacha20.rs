@@ -27,8 +27,8 @@ pub fn state_to_bytes(x: State) -> StateBytes {
 #[wrappit]
 fn line(a: usize, b: usize, d: usize, s: usize, m: State) -> State {
     let mut state = m;
-    state[a] = state[a] + state[b];
-    state[d] = state[d] ^ state[a];
+    state[a] += state[b];
+    state[d] ^= state[a];
     // TODO: The 32 here is interpreted as i32 on Linux (not on Windows),
     //       where .wrapping_sub is not defined.
     state[d] = state[d] << s | state[d] >> (32usize - s);
@@ -39,8 +39,7 @@ pub fn quarter_round(a: usize, b: usize, c: usize, d: usize, m: State) -> State 
     let state = line(a, b, d, 16, m);
     let state = line(c, d, b, 12, state);
     let state = line(a, b, d, 8, state);
-    let state = line(c, d, b, 7, state);
-    state
+    line(c, d, b, 7, state)
 }
 
 fn double_round(m: State) -> State {
@@ -52,16 +51,15 @@ fn double_round(m: State) -> State {
     let state = quarter_round(0, 5, 10, 15, state);
     let state = quarter_round(1, 6, 11, 12, state);
     let state = quarter_round(2, 7, 8, 13, state);
-    let state = quarter_round(3, 4, 9, 14, state);
-    state
+    quarter_round(3, 4, 9, 14, state)
 }
 
 pub fn block_init(key: Key, ctr: u32, iv: IV) -> State {
-    let state = [
-        0x61707865,
-        0x3320646e,
-        0x79622d32,
-        0x6b206574,
+    [
+        0x6170_7865,
+        0x3320_646e,
+        0x7962_2d32,
+        0x6b20_6574,
         u32::from_le_bytes(key.get(0..4)),
         u32::from_le_bytes(key.get(4..8)),
         u32::from_le_bytes(key.get(8..12)),
@@ -74,8 +72,7 @@ pub fn block_init(key: Key, ctr: u32, iv: IV) -> State {
         u32::from_le_bytes(iv.get(0..4)),
         u32::from_le_bytes(iv.get(4..8)),
         u32::from_le_bytes(iv.get(8..12)),
-    ];
-    state
+    ]
 }
 
 #[wrappit]
