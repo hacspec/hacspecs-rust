@@ -17,8 +17,6 @@ bytes!(RCon, 11);
 bytes!(Bytes144, 144);
 bytes!(Bytes176, 176);
 
-type State = [u32; BLOCKSIZE];
-
 const SBOX:SBox = SBox([
     0x63, 0x7C, 0x77, 0x7B, 0xF2, 0x6B, 0x6F, 0xC5, 0x30, 0x01, 0x67, 0x2B, 0xFE, 0xD7, 0xAB, 0x76,
     0xCA, 0x82, 0xC9, 0x7D, 0xFA, 0x59, 0x47, 0xF0, 0xAD, 0xD4, 0xA2, 0xAF, 0x9C, 0xA4, 0x72, 0xC0,
@@ -38,7 +36,7 @@ const SBOX:SBox = SBox([
     0x8C, 0xA1, 0x89, 0x0D, 0xBF, 0xE6, 0x42, 0x68, 0x41, 0x99, 0x2D, 0x0F, 0xB0, 0x54, 0xBB, 0x16
 ]);
 
-fn subBytes(state: Block) -> Block {
+fn sub_bytes(state: Block) -> Block {
     let mut st = state;
     for i in 0..16 {
         st[i] = SBOX[state[i]];
@@ -46,7 +44,7 @@ fn subBytes(state: Block) -> Block {
     st
 }
 
-fn shiftRow(i: usize, shift: usize, state: Block) -> Block {
+fn shift_row(i: usize, shift: usize, state: Block) -> Block {
     assert!(i < 4 && shift < 4);
     let mut out = state;
     out[i] = state[i + (4 * (shift % 4))];
@@ -56,10 +54,10 @@ fn shiftRow(i: usize, shift: usize, state: Block) -> Block {
     out
 }
 
-fn shiftRows(state: Block) -> Block {
-    let state = shiftRow(1, 1, state);
-    let state = shiftRow(2, 2, state);
-    shiftRow(3, 3, state)
+fn shift_rows(state: Block) -> Block {
+    let state = shift_row(1, 1, state);
+    let state = shift_row(2, 2, state);
+    shift_row(3, 3, state)
 }
 
 fn xtime(x: u8) -> u8 {
@@ -70,7 +68,7 @@ fn xtime(x: u8) -> u8 {
     x1 ^ x711b
 }
 
-fn mixColumn(c: usize, state: Block) -> Block {
+fn mix_column(c: usize, state: Block) -> Block {
     assert!(c < 4);
     let i0 = 4 * c;
     let s0 = state[i0];
@@ -86,14 +84,14 @@ fn mixColumn(c: usize, state: Block) -> Block {
     st
 }
 
-fn mixColumns(state: Block) -> Block {
-    let state = mixColumn(0,state);
-    let state = mixColumn(1,state);
-    let state = mixColumn(2,state);
-    mixColumn(3,state)
+fn mix_columns(state: Block) -> Block {
+    let state = mix_column(0,state);
+    let state = mix_column(1,state);
+    let state = mix_column(2,state);
+    mix_column(3,state)
 }
 
-fn addRoundKey(state: Block, key: Key) -> Block {
+fn add_round_key(state: Block, key: Key) -> Block {
     let mut out = state;
     for i in 0..16 {
         out[i] ^= key[i];
@@ -102,16 +100,16 @@ fn addRoundKey(state: Block, key: Key) -> Block {
 }
 
 fn aes_enc(state: Block, round_key: Key) -> Block {
-    let state = subBytes(state);
-    let state = shiftRows(state);
-    let state = mixColumns(state);
-    addRoundKey(state,round_key)
+    let state = sub_bytes(state);
+    let state = shift_rows(state);
+    let state = mix_columns(state);
+    add_round_key(state,round_key)
 }
 
 fn aes_enc_last(state: Block, round_key: Key) -> Block {
-    let state = subBytes(state);
-    let state = shiftRows(state);
-    addRoundKey(state,round_key)
+    let state = sub_bytes(state);
+    let state = shift_rows(state);
+    add_round_key(state,round_key)
 }
 
 // TODO: get rid of into
@@ -128,7 +126,7 @@ fn block_cipher(input: Block, key: Bytes176) -> Block {
     let k0: Key = key[0..16].into();
     let k: Bytes144 = key[16..10*16].into();
     let kn: Key = key[10*16..11*16].into();
-    let state = addRoundKey(input, k0);
+    let state = add_round_key(input, k0);
     let state = rounds(state, k);
     aes_enc_last(state, kn)
 }
@@ -173,13 +171,63 @@ fn key_expansion_word(w0: Word, w1: Word, i: usize) -> Word {
     k
 }
 
-// fn key_expansion(key: Block) -> Bytes176 {
-//     let mut key_ex = Bytes176::new();
-//     key_ex[0..16] = key;
-//     let mut i = 0;
-//     for j in 0..40 {
-//         i = j + 4;
-//         key_ex[4*i..4*i+4] = key_expansion_word(key_ex[4*i-16..4*i-12], key_ex[4*i-4..4*i],i);
-//     }
-//     key_ex
-// }
+fn key_expansion(key: Key) -> Bytes176 {
+    let mut key_ex = Bytes176::new();
+    key_ex.update(0, key.raw());
+    let mut i: usize;
+    for j in 0..40 {
+        i = j + 4;
+        let word = key_expansion_word(key_ex[4*i-16..4*i-12].into(),
+                                      key_ex[4*i-4..4*i].into(), i);
+        key_ex.update(4*i, word.raw());
+    }
+    key_ex
+}
+
+fn aes128_encrypt_block(k: Key, input: Block) -> Block {
+    let key_ex = key_expansion(k);
+    block_cipher(input, key_ex)
+}
+
+fn aes128_ctr_keyblock(k: Key, n: Nonce, c: u32) -> Block {
+    let mut input = Block::new();
+    input.update(0, n.raw());
+    input.update(12, &c.to_le_bytes());
+    aes128_encrypt_block(k, input)
+}
+
+fn xor_block(block: Block, keyblock: Block) -> Block {
+    let mut out = block;
+    for i in 0..BLOCKSIZE {
+        out[i] ^= keyblock[i];
+    }
+    out
+}
+
+fn aes128_counter_mode(key: Key, nonce: Nonce, counter: u32, msg: Bytes) -> Bytes {
+    let l = msg.len();
+    let n_blocks: usize = l / BLOCKSIZE;
+    let rem = l % BLOCKSIZE;
+    let mut ctr = counter;
+    let mut blocks_out = Bytes::new_len(l);
+    for i in 0..n_blocks {
+        let keyblock = aes128_ctr_keyblock(key, nonce, ctr);
+        let k = i * BLOCKSIZE;
+        blocks_out.update(k, xor_block(msg[k..k+BLOCKSIZE].into(), keyblock).raw());
+        ctr += 1;
+    }
+    let keyblock = aes128_ctr_keyblock(key, nonce, ctr);
+    let k = n_blocks * BLOCKSIZE;
+    let mut last_block = Block::new();
+    last_block.update(0, &msg[k..k+rem]);
+    blocks_out.update(k, &xor_block(last_block, keyblock)[0..rem]);
+    blocks_out
+}
+
+pub fn aes128_encrypt(key: Key, nonce: Nonce, counter: u32, msg: Bytes) -> Bytes {
+    aes128_counter_mode(key, nonce, counter, msg)
+}
+
+pub fn aes128_decrypt(key: Key, nonce: Nonce, counter: u32, ctxt: Bytes) -> Bytes {
+    aes128_counter_mode(key, nonce, counter, ctxt)
+}
