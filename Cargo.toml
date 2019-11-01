@@ -11,6 +11,7 @@ hacspec = "0.1"
 abstract_integers = "0.1"
 num = "0.2"
 wrapping_arithmetic = "0.1"
+contracts = "0.3"
 
 [patch.crates-io]
 hacspec = { git = "https://github.com/hacspec/hacspec-rust" }

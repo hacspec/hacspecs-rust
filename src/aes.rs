@@ -1,8 +1,8 @@
 // Import hacspec and all needed definitions.
 use hacspec::*;
 hacspec_imports!();
-
-// TODO: can we do refinement types somehow?
+// TODO: move to hacspec_imports if we want to use it!
+use contracts::*;
 
 const BLOCKSIZE: usize = 16;
 const IVSIZE: usize = 12;
@@ -36,6 +36,10 @@ const SBOX: SBox = SBox([
     0x8C, 0xA1, 0x89, 0x0D, 0xBF, 0xE6, 0x42, 0x68, 0x41, 0x99, 0x2D, 0x0F, 0xB0, 0x54, 0xBB, 0x16,
 ]);
 
+const RCON: RCon = RCon([
+    0x8d, 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x1b, 0x36,
+]);
+
 fn sub_bytes(state: Block) -> Block {
     let mut st = state;
     for i in 0..16 {
@@ -44,8 +48,9 @@ fn sub_bytes(state: Block) -> Block {
     st
 }
 
+#[pre(i < 4)]
+#[pre(shift < 4)]
 fn shift_row(i: usize, shift: usize, state: Block) -> Block {
-    assert!(i < 4 && shift < 4);
     let mut out = state;
     out[i] = state[i + (4 * (shift % 4))];
     out[i + 4] = state[i + (4 * ((shift + 1) % 4))];
@@ -68,8 +73,8 @@ fn xtime(x: u8) -> u8 {
     x1 ^ x711b
 }
 
+#[pre(c < 4)]
 fn mix_column(c: usize, state: Block) -> Block {
-    assert!(c < 4);
     let i0 = 4 * c;
     let s0 = state[i0];
     let s1 = state[i0 + 1];
@@ -112,47 +117,30 @@ fn aes_enc_last(state: Block, round_key: Key) -> Block {
     add_round_key(state, round_key)
 }
 
-// TODO: get rid of into
 fn rounds(state: Block, key: Bytes144) -> Block {
     let mut out = state;
     for i in 0..9 {
-        out = aes_enc(out, key[16 * i..16 * i + 16].into());
+        out = aes_enc(out, key.get(16 * i..16 * i + 16));
     }
     out
 }
 
-// TODO: get rid of into
 fn block_cipher(input: Block, key: Bytes176) -> Block {
-    let k0: Key = key[0..16].into();
-    let k: Bytes144 = key[16..10 * 16].into();
-    let kn: Key = key[10 * 16..11 * 16].into();
+    let k0: Key = key.get(0..16);
+    let k: Bytes144 = key.get(16..10 * 16);
+    let kn: Key = key.get(10 * 16..11 * 16);
     let state = add_round_key(input, k0);
     let state = rounds(state, k);
     aes_enc_last(state, kn)
 }
 
-// TODO: this and sub_word could be written in a nicer way
 fn rotate_word(w: Word) -> Word {
-    let mut out = w;
-    out[0] = w[1];
-    out[1] = w[2];
-    out[2] = w[3];
-    out[3] = w[0];
-    out
+    Word([w[1], w[2], w[3], w[0]])
 }
 
 fn sub_word(w: Word) -> Word {
-    let mut out = w;
-    out[0] = SBOX[w[0]];
-    out[1] = SBOX[w[1]];
-    out[2] = SBOX[w[2]];
-    out[3] = SBOX[w[3]];
-    out
+    Word([SBOX[w[0]], SBOX[w[1]], SBOX[w[2]], SBOX[w[3]]])
 }
-
-const RCON: RCon = RCon([
-    0x8d, 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x1b, 0x36,
-]);
 
 fn aes_keygen_assist(w: Word, rcon: u8) -> Word {
     let k = rotate_word(w);
@@ -180,8 +168,8 @@ fn key_expansion(key: Key) -> Bytes176 {
     for j in 0..40 {
         i = j + 4;
         let word = key_expansion_word(
-            key_ex[4 * i - 16..4 * i - 12].into(),
-            key_ex[4 * i - 4..4 * i].into(),
+            key_ex.get(4 * i - 16..4 * i - 12),
+            key_ex.get(4 * i - 4..4 * i),
             i,
         );
         key_ex.update(4 * i, word.raw());
@@ -209,6 +197,7 @@ fn xor_block(block: Block, keyblock: Block) -> Block {
     out
 }
 
+// TODO: get rid of into and raw
 fn aes128_counter_mode(key: Key, nonce: Nonce, counter: u32, msg: Bytes) -> Bytes {
     let l = msg.len();
     let n_blocks: usize = l / BLOCKSIZE;
@@ -235,6 +224,20 @@ pub fn aes128_encrypt(key: Key, nonce: Nonce, counter: u32, msg: Bytes) -> Bytes
 
 pub fn aes128_decrypt(key: Key, nonce: Nonce, counter: u32, ctxt: Bytes) -> Bytes {
     aes128_counter_mode(key, nonce, counter, ctxt)
+}
+
+// Testing some internal functions.
+
+#[test]
+#[should_panic]
+fn test_contract1() {
+    shift_row(4, 3, Block::new());
+}
+
+#[test]
+#[should_panic]
+fn test_contract2() {
+    shift_row(2, 4, Block::new());
 }
 
 #[test]
