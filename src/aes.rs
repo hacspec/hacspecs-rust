@@ -163,7 +163,7 @@ fn key_expansion_word(w0: Word, w1: Word, i: usize) -> Word {
 
 fn key_expansion(key: Key) -> Bytes176 {
     let mut key_ex = Bytes176::new();
-    key_ex.update(0, key.raw());
+    key_ex.update(0, &key);
     let mut i: usize;
     for j in 0..40 {
         i = j + 4;
@@ -172,7 +172,7 @@ fn key_expansion(key: Key) -> Bytes176 {
             key_ex.get(4 * i - 4..4 * i),
             i,
         );
-        key_ex.update(4 * i, word.raw());
+        key_ex.update(4 * i, &word);
     }
     key_ex
 }
@@ -184,8 +184,8 @@ fn aes128_encrypt_block(k: Key, input: Block) -> Block {
 
 fn aes128_ctr_keyblock(k: Key, n: Nonce, c: u32) -> Block {
     let mut input = Block::new();
-    input.update(0, n.raw());
-    input.update(12, &c.to_be_bytes());
+    input.update(0, &n);
+    input.update_raw(12, &c.to_be_bytes());
     aes128_encrypt_block(k, input)
 }
 
@@ -197,7 +197,6 @@ fn xor_block(block: Block, keyblock: Block) -> Block {
     out
 }
 
-// TODO: get rid of into and raw
 fn aes128_counter_mode(key: Key, nonce: Nonce, counter: u32, msg: Bytes) -> Bytes {
     let l = msg.len();
     let n_blocks: usize = l / BLOCKSIZE;
@@ -207,14 +206,14 @@ fn aes128_counter_mode(key: Key, nonce: Nonce, counter: u32, msg: Bytes) -> Byte
     for i in 0..n_blocks {
         let keyblock = aes128_ctr_keyblock(key, nonce, ctr);
         let k = i * BLOCKSIZE;
-        blocks_out.update(k, xor_block(msg[k..k + BLOCKSIZE].into(), keyblock).raw());
+        blocks_out.update(k, &xor_block(msg.get(k..k + BLOCKSIZE), keyblock));
         ctr += 1;
     }
     let keyblock = aes128_ctr_keyblock(key, nonce, ctr);
     let k = n_blocks * BLOCKSIZE;
     let mut last_block = Block::new();
-    last_block.update(0, &msg[k..k + rem]);
-    blocks_out.update(k, &xor_block(last_block, keyblock)[0..rem]);
+    last_block.update_raw(0, &msg[k..k + rem]);
+    blocks_out.update_raw(k, &xor_block(last_block, keyblock)[0..rem]);
     blocks_out
 }
 

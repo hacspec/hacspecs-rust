@@ -22,17 +22,11 @@ fn pad_aad_msg(aad: Bytes, msg: &Bytes) -> Bytes {
     } else {
         16 * ((lmsg >> 4) + 1)
     };
-    let mut padded_msg = aad;
-    // TODO: still too complicated
-    for _ in 0..(pad_aad - laad) {
-        padded_msg.push(0);
-    }
-    padded_msg.extend(msg.clone());
-    for _ in 0..(pad_msg - lmsg) {
-        padded_msg.push(0);
-    }
-    padded_msg.extend_from_slice(&(laad as u64).to_le_bytes());
-    padded_msg.extend_from_slice(&(lmsg as u64).to_le_bytes());
+    let mut padded_msg = Bytes::new_len(pad_aad + pad_msg + 16);
+    padded_msg.update(0, &aad);
+    padded_msg.update(pad_aad, msg);
+    padded_msg.update_raw(pad_aad + pad_msg, &(laad as u64).to_le_bytes());
+    padded_msg.update_raw(pad_aad + pad_msg + 8, &(lmsg as u64).to_le_bytes());
     padded_msg
 }
 
