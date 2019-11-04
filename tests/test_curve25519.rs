@@ -30,7 +30,7 @@ fn test_kat1() {
     ecdh(s, u, expected);
 }
 
-const KAT: [(&str, &str, &str); 4] = [
+const KAT: [(&str, &str, &str); 5] = [
     (
         "77076d0a7318a57d3c16c17251b26645df4c2f87ebc0992ab177fba51db92c2a",
         "de9edb7d7b7dc1b4d35b61c2ece435373f8343c85b78674dadfc7e146f882b4f",
@@ -46,11 +46,11 @@ const KAT: [(&str, &str, &str); 4] = [
         "2500000000000000000000000000000000000000000000000000000000000000",
         "3c7777caf997b264416077665b4e229d0b9548dc0cd81998ddcdc5c8533c797f",
     ),
-    // ( // FIXME: failing...
-    //     "0100000000000000000000000000000000000000000000000000000000000000",
-    //     "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
-    //     "b32d1362c248d62fe62619cff04dd43db73ffc1b6308ede30b78d87380f1e834",
-    // ),
+    (
+        "0100000000000000000000000000000000000000000000000000000000000000",
+        "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "b32d1362c248d62fe62619cff04dd43db73ffc1b6308ede30b78d87380f1e834",
+    ),
     (
         "a546e36bf0527c9d3b16154b82465edd62144c0ac1fc5a18506a2244ba449ac4",
         "e6db6867583030db3594c1a424b15f7c726624ec26b3353b10a903a6d0ab1c4c",

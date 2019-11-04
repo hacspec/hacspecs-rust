@@ -1,8 +1,6 @@
 // Import hacspec and all needed definitions.
 use hacspec::*;
 hacspec_imports!();
-// TODO: move to hacspec_imports if we want to use it!
-use contracts::*;
 
 // Define field mod 2^255-19
 #[field(7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffed)]
@@ -15,8 +13,6 @@ struct Scalar;
 type Point = (FieldElement, FieldElement);
 bytes!(SerializedPoint, 32);
 bytes!(SerializedScalar, 32);
-
-// const G25519: Point = (FieldElement::from(9), FieldElement::from(1));
 
 fn mask_scalar(s: SerializedScalar) -> SerializedScalar {
     let mut k = s;
@@ -33,7 +29,13 @@ fn decode_scalar(s: SerializedScalar) -> Scalar {
 }
 
 fn decode_point(u: SerializedPoint) -> Point {
-    (FieldElement::from_bytes_le(&u.raw()), FieldElement::from(1))
+    // TODO: We really only need a BigUint here. How do we want to handle something like this?
+    let u_ = Scalar::from_bytes_le(&u.raw())
+        % Scalar::from_hex("8000000000000000000000000000000000000000000000000000000000000000");
+    (
+        FieldElement::from_bytes_le(&u_.to_bytes_le()),
+        FieldElement::from(1),
+    )
 }
 
 fn encode_point(p: Point) -> SerializedPoint {
@@ -64,11 +66,11 @@ fn point_add_and_double(q: Point, nq: Point, nqp1: Point) -> (Point, Point) {
     ((x_2, z_2), (x_3, z_3))
 }
 
-// TODO: this is ugly
 fn montgomery_ladder(k: Scalar, init: Point) -> Point {
     let mut acc: (Point, Point) = ((1.into(), 0.into()), init);
     for i in 0..256 {
         if k.bit(255 - i) == 1 {
+            // TODO: this is ugly
             let tmp = point_add_and_double(init, acc.1, acc.0);
             acc = (tmp.1, tmp.0);
         } else {
