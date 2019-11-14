@@ -7,15 +7,14 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-hacspec = "0.1"
-abstract_integers = "0.1"
 num = "0.2"
+hacspec = "0.1"
 wrapping_arithmetic = "0.1"
 contracts = "0.3"
+uint_n = { git = "https://github.com/franziskuskiefer/rust-uint-n" }
+# uint_n = { path = "../uint_n" }
 
 [patch.crates-io]
+# wrapping_arithmetic = { git = "https://github.com/franziskuskiefer/wrapping-arithmetic" }
 hacspec = { git = "https://github.com/hacspec/hacspec-rust" }
 # hacspec = { path = "../hacspec-rust" }
-abstract_integers = { git = "https://github.com/franziskuskiefer/rust-abstract-integers", branch = "dev"}
-# abstract_integers = { path = "../rust-abstract-integers" }
-wrapping_arithmetic = { git = "https://github.com/franziskuskiefer/wrapping-arithmetic" }
