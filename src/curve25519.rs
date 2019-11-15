@@ -6,8 +6,8 @@ hacspec_imports!();
 #[field(7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffed)]
 struct FieldElement;
 
-// Define scalars mod 2^256
-#[field(10000000000000000000000000000000000000000000000000000000000000000)]
+// Define 255-bit scalars
+#[bits(255)]
 struct Scalar;
 
 type Point = (FieldElement, FieldElement);
@@ -29,9 +29,7 @@ fn decode_scalar(s: SerializedScalar) -> Scalar {
 }
 
 fn decode_point(u: SerializedPoint) -> Point {
-    // TODO: We really only need a BigUint here. How do we want to handle something like this?
-    let u_ = Scalar::from_bytes_le(&u.raw())
-        % Scalar::from_hex("8000000000000000000000000000000000000000000000000000000000000000");
+    let u_ = Scalar::from_bytes_le(&u.raw());
     (
         FieldElement::from_bytes_le(&u_.to_bytes_le()),
         FieldElement::from(1),
