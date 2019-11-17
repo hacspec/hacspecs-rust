@@ -39,7 +39,7 @@ fn decode_point(u: SerializedPoint) -> Point {
 fn encode_point(p: Point) -> SerializedPoint {
     let (x, y) = p;
     let b = x * y.inv();
-    SerializedPoint::from(&b.to_bytes_le()[..]) // TODO: make nice
+    SerializedPoint::from_field(b)
 }
 
 fn point_add_and_double(q: Point, nq: Point, nqp1: Point) -> (Point, Point) {
