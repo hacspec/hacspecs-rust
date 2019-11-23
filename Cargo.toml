@@ -12,7 +12,7 @@ hacspec = "0.1"
 wrapping_arithmetic = "0.1"
 contracts = "0.3"
 uint = { git = "https://github.com/franziskuskiefer/rust-uint-n" }
-# uint = { path = "../uint_n" }
+# uint = { path = "../rust-uint-n" }
 
 [patch.crates-io]
 # wrapping_arithmetic = { git = "https://github.com/franziskuskiefer/wrapping-arithmetic" }

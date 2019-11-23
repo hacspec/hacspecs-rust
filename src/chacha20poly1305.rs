@@ -9,7 +9,7 @@ use chacha20::*;
 use poly1305::*;
 
 // TODO: can we do without borrow?
-fn pad_aad_msg(aad: Bytes, msg: &Bytes) -> Bytes {
+fn pad_aad_msg(aad: Bytes, msg: Bytes) -> Bytes {
     let laad = aad.len();
     let lmsg = msg.len();
     let pad_aad = if laad % 16 == 0 {
@@ -24,7 +24,7 @@ fn pad_aad_msg(aad: Bytes, msg: &Bytes) -> Bytes {
     };
     let mut padded_msg = Bytes::new_len(pad_aad + pad_msg + 16);
     padded_msg.update(0, &aad);
-    padded_msg.update(pad_aad, msg);
+    padded_msg.update_vec(pad_aad, msg.into());
     padded_msg.update_raw(pad_aad + pad_msg, &(laad as u64).to_le_bytes());
     padded_msg.update_raw(pad_aad + pad_msg + 8, &(lmsg as u64).to_le_bytes());
     padded_msg
@@ -40,7 +40,7 @@ pub fn encrypt(key: Key, iv: IV, aad: Bytes, msg: Bytes) -> Result<(Bytes, Tag),
             return Err(r);
         }
     };
-    let padded_msg = pad_aad_msg(aad, &cipher_text);
+    let padded_msg = pad_aad_msg(aad, cipher_text.clone());
     let tag = poly(padded_msg, mac_key);
     Ok((cipher_text, tag))
 }
@@ -53,8 +53,8 @@ pub fn decrypt(
     tag: Tag,
 ) -> Result<Bytes, String> {
     let key_block = block(key, 0, iv);
-    let mac_key = Key::from(&key_block[0..32]);
-    let padded_msg = pad_aad_msg(aad, &cipher_text);
+    let mac_key = Key::from_array(key_block.get(0..32));
+    let padded_msg = pad_aad_msg(aad, cipher_text.clone());
     let my_tag = poly(padded_msg, mac_key);
     if my_tag == tag {
         match chacha(key, iv, cipher_text) {
