@@ -57,7 +57,7 @@ pub fn decrypt(
     let padded_msg = pad_aad_msg(aad, cipher_text.clone());
     let my_tag = poly(padded_msg, mac_key);
     if my_tag == tag {
-        match chacha(key, iv, cipher_text) {
+        match chacha(key, iv, cipher_text.clone()) {
             Ok(c) => Ok(c),
             Err(r) => {
                 println!("Error decrypting chacha20: {}", r);

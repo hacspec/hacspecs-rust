@@ -14,4 +14,5 @@ pub mod blake2b;
 pub mod chacha20;
 pub mod chacha20poly1305;
 pub mod curve25519;
+pub mod gf128;
 pub mod poly1305;
