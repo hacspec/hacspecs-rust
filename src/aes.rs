@@ -183,14 +183,14 @@ fn aes128_encrypt_block(k: Key, input: Block) -> Block {
     block_cipher(input, key_ex)
 }
 
-fn aes128_ctr_keyblock(k: Key, n: Nonce, c: u32) -> Block {
+pub(crate) fn aes128_ctr_keyblock(k: Key, n: Nonce, c: u32) -> Block {
     let mut input = Block::new();
     input.update_vec(0, n.into());
     input.update_raw(12, &c.to_be_bytes());
     aes128_encrypt_block(k, input)
 }
 
-fn xor_block(block: Block, keyblock: Block) -> Block {
+pub(crate) fn xor_block(block: Block, keyblock: Block) -> Block {
     let mut out = block;
     for i in 0..BLOCKSIZE {
         out[i] ^= keyblock[i];

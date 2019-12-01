@@ -3,10 +3,8 @@ use hacspec::*;
 hacspec_imports!();
 
 // Import chacha20 and poly1305
-use crate::chacha20;
-use crate::poly1305;
-use chacha20::*;
-use poly1305::*;
+use crate::chacha20::*;
+use crate::poly1305::*;
 
 // TODO: can we do without borrow?
 fn pad_aad_msg(aad: Bytes, msg: Bytes) -> Bytes {

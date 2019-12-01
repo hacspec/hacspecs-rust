@@ -2,6 +2,9 @@
 use hacspec::*;
 hacspec_imports!();
 
+// Get Key, Block, and BLOCKSIZE types
+// use crate::aes::{Key, Block};
+
 const BLOCKSIZE: usize = 16;
 // TODO: these should all cast to each other without into
 bytes!(Block, BLOCKSIZE);
