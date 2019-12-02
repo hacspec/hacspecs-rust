@@ -16,4 +16,5 @@ pub mod chacha20;
 pub mod chacha20poly1305;
 pub mod curve25519;
 pub mod gf128;
+pub mod p256;
 pub mod poly1305;
