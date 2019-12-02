@@ -16,5 +16,5 @@ uint = { git = "https://github.com/franziskuskiefer/rust-uint-n" }
 
 [patch.crates-io]
 # wrapping_arithmetic = { git = "https://github.com/franziskuskiefer/wrapping-arithmetic" }
-hacspec = { git = "https://github.com/hacspec/hacspec-rust" }
-# hacspec = { path = "../hacspec-rust" }
+# hacspec = { git = "https://github.com/hacspec/hacspec-rust" }
+hacspec = { path = "../hacspec-rust" }
