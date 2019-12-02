@@ -7,9 +7,9 @@ hacspec_imports!();
 
 const BLOCKSIZE: usize = 16;
 // TODO: these should all cast to each other without into
-bytes!(Block, BLOCKSIZE);
-bytes!(Key, BLOCKSIZE);
-bytes!(Tag, BLOCKSIZE);
+array!(Block, BLOCKSIZE, u8);
+array!(Key, BLOCKSIZE, u8);
+array!(Tag, BLOCKSIZE, u8);
 
 // TODO: Use a 128-bit uint_n instead?
 type Element = u128;

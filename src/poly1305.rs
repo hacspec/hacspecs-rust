@@ -13,7 +13,7 @@ const BLOCKSIZE: usize = 16;
 type Block = [u8; BLOCKSIZE];
 
 // These are actual types; fixed-length arrays.
-bytes!(Tag, BLOCKSIZE);
+array!(Tag, BLOCKSIZE, u8);
 
 // Define the Poly1305 field and field elements.
 #[field(3fffffffffffffffffffffffffffffffb)]

@@ -4,8 +4,8 @@ hacspec_imports!();
 
 type IV = [u64; 8];
 type Counter = [u64; 2];
-bytes!(Buffer, 128);
-bytes!(Digest, 64);
+array!(Buffer, 128, u8);
+array!(Digest, 64, u8);
 
 static SIGMA: [[usize; 16]; 12] = [
     [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],

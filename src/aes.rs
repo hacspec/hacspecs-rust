@@ -7,15 +7,15 @@ use contracts::*;
 const BLOCKSIZE: usize = 16;
 const IVSIZE: usize = 12;
 
-bytes!(Block, BLOCKSIZE);
-bytes!(Word, 4);
-bytes!(Key, BLOCKSIZE);
-bytes!(Nonce, IVSIZE);
-bytes!(SBox, 256);
-bytes!(RCon, 11);
+array!(Block, BLOCKSIZE, u8);
+array!(Word, 4, u8);
+array!(Key, BLOCKSIZE, u8);
+array!(Nonce, IVSIZE, u8);
+array!(SBox, 256, u8);
+array!(RCon, 11, u8);
 
-bytes!(Bytes144, 144);
-bytes!(Bytes176, 176);
+array!(Bytes144, 144, u8);
+array!(Bytes176, 176, u8);
 
 const SBOX: SBox = SBox([
     0x63, 0x7C, 0x77, 0x7B, 0xF2, 0x6B, 0x6F, 0xC5, 0x30, 0x01, 0x67, 0x2B, 0xFE, 0xD7, 0xAB, 0x76,
@@ -43,7 +43,7 @@ const RCON: RCon = RCon([
 fn sub_bytes(state: Block) -> Block {
     let mut st = state;
     for i in 0..16 {
-        st[i] = SBOX[state[i]];
+        st[i] = SBOX[state[i] as usize];
     }
     st
 }
@@ -135,11 +135,16 @@ fn block_cipher(input: Block, key: Bytes176) -> Block {
 }
 
 fn rotate_word(w: Word) -> Word {
-    Word([w[1], w[2], w[3], w[0]])
+    Word([w[1usize], w[2usize], w[3usize], w[0usize]])
 }
 
 fn sub_word(w: Word) -> Word {
-    Word([SBOX[w[0]], SBOX[w[1]], SBOX[w[2]], SBOX[w[3]]])
+    Word([
+        SBOX[w[0usize] as usize],
+        SBOX[w[1usize] as usize],
+        SBOX[w[2usize] as usize],
+        SBOX[w[3usize] as usize],
+    ])
 }
 
 fn aes_keygen_assist(w: Word, rcon: u8) -> Word {

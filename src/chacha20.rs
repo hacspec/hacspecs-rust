@@ -8,9 +8,9 @@ hacspec_imports!();
 type State = [u32; 16];
 
 // These are actual types; fixed-length arrays.
-bytes!(StateBytes, 64);
-bytes!(IV, 12);
-bytes!(Key, 32);
+array!(StateBytes, 64, u8);
+array!(IV, 12, u8);
+array!(Key, 32, u8);
 
 pub fn state_to_bytes(x: State) -> StateBytes {
     let mut r = StateBytes::new();
