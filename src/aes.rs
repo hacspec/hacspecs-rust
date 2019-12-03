@@ -198,7 +198,7 @@ pub(crate) fn xor_block(block: Block, keyblock: Block) -> Block {
     out
 }
 
-fn aes128_counter_mode(key: Key, nonce: Nonce, counter: u32, msg: Bytes) -> Bytes {
+fn aes128_counter_mode(key: Key, nonce: Nonce, counter: u32, msg: ByteSlice) -> Bytes {
     let l = msg.len();
     let n_blocks: usize = l / BLOCKSIZE;
     let rem = l % BLOCKSIZE;
@@ -219,11 +219,11 @@ fn aes128_counter_mode(key: Key, nonce: Nonce, counter: u32, msg: Bytes) -> Byte
     blocks_out
 }
 
-pub fn aes128_encrypt(key: Key, nonce: Nonce, counter: u32, msg: Bytes) -> Bytes {
+pub fn aes128_encrypt(key: Key, nonce: Nonce, counter: u32, msg: ByteSlice) -> Bytes {
     aes128_counter_mode(key, nonce, counter, msg)
 }
 
-pub fn aes128_decrypt(key: Key, nonce: Nonce, counter: u32, ctxt: Bytes) -> Bytes {
+pub fn aes128_decrypt(key: Key, nonce: Nonce, counter: u32, ctxt: ByteSlice) -> Bytes {
     aes128_counter_mode(key, nonce, counter, ctxt)
 }
 
