@@ -22,9 +22,9 @@ fn pad_aad_msg(aad: Bytes, msg: Bytes) -> Bytes {
     };
     let mut padded_msg = Bytes::new_len(pad_aad + pad_msg + 16);
     padded_msg.update(0, &aad);
-    padded_msg.update_vec(pad_aad, msg.into());
-    padded_msg.update_raw(pad_aad + pad_msg, &(laad as u64 * 8).to_be_bytes());
-    padded_msg.update_raw(pad_aad + pad_msg + 8, &(lmsg as u64 * 8).to_be_bytes());
+    padded_msg.update(pad_aad, &msg);
+    padded_msg.update(pad_aad + pad_msg, &u64_to_be_bytes(laad as u64 * 8));
+    padded_msg.update(pad_aad + pad_msg + 8, &u64_to_be_bytes(lmsg as u64 * 8));
     padded_msg
 }
 

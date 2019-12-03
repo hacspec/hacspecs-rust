@@ -7,15 +7,15 @@ use contracts::*;
 const BLOCKSIZE: usize = 16;
 const IVSIZE: usize = 12;
 
-array!(Block, BLOCKSIZE, u8);
-array!(Word, 4, u8);
-array!(Key, BLOCKSIZE, u8);
-array!(Nonce, IVSIZE, u8);
-array!(SBox, 256, u8);
-array!(RCon, 11, u8);
+bytes!(Block, BLOCKSIZE);
+bytes!(Word, 4);
+bytes!(Key, BLOCKSIZE);
+bytes!(Nonce, IVSIZE);
+bytes!(SBox, 256);
+bytes!(RCon, 11);
 
-array!(Bytes144, 144, u8);
-array!(Bytes176, 176, u8);
+bytes!(Bytes144, 144);
+bytes!(Bytes176, 176);
 
 const SBOX: SBox = SBox([
     0x63, 0x7C, 0x77, 0x7B, 0xF2, 0x6B, 0x6F, 0xC5, 0x30, 0x01, 0x67, 0x2B, 0xFE, 0xD7, 0xAB, 0x76,
@@ -169,7 +169,7 @@ fn key_expansion_word(w0: Word, w1: Word, i: usize) -> Word {
 fn key_expansion(key: Key) -> Bytes176 {
     let mut key_ex = Bytes176::new();
     // TODO: get rid of all `into`
-    key_ex.update_vec(0, key.into());
+    key_ex.update(0, &key);
     let mut i: usize;
     for j in 0..40 {
         i = j + 4;
@@ -178,7 +178,7 @@ fn key_expansion(key: Key) -> Bytes176 {
             key_ex.get(4 * i - 4..4 * i),
             i,
         );
-        key_ex.update_vec(4 * i, word.into());
+        key_ex.update(4 * i, &word);
     }
     key_ex
 }
@@ -190,8 +190,8 @@ fn aes128_encrypt_block(k: Key, input: Block) -> Block {
 
 pub(crate) fn aes128_ctr_keyblock(k: Key, n: Nonce, c: u32) -> Block {
     let mut input = Block::new();
-    input.update_vec(0, n.into());
-    input.update_raw(12, &c.to_be_bytes());
+    input.update(0, &n);
+    input.update(12, &u32_to_be_bytes(c));
     aes128_encrypt_block(k, input)
 }
 
@@ -212,15 +212,14 @@ fn aes128_counter_mode(key: Key, nonce: Nonce, counter: u32, msg: Bytes) -> Byte
     for i in 0..n_blocks {
         let keyblock = aes128_ctr_keyblock(key, nonce, ctr);
         let k = i * BLOCKSIZE;
-        blocks_out.update_vec(k, xor_block(msg.get(k..k + BLOCKSIZE), keyblock).into());
+        blocks_out.update(k, &xor_block(msg.get(k..k + BLOCKSIZE), keyblock));
         ctr += 1;
     }
     let keyblock = aes128_ctr_keyblock(key, nonce, ctr);
     let k = n_blocks * BLOCKSIZE;
     let mut last_block = Block::new();
-    last_block.update_raw(0, &msg[k..k + rem]);
-    // TODO: this doesn't work with `update_vec` because we have to truncate.
-    blocks_out.update_raw(k, &xor_block(last_block, keyblock)[0..rem]);
+    last_block.update_sub(0, &msg, k, rem);
+    blocks_out.update_sub(k, &xor_block(last_block, keyblock), 0, rem);
     blocks_out
 }
 

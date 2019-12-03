@@ -63,7 +63,7 @@ fn poly(msg: Bytes, r: Element) -> Element {
     if rem != 0 {
         let k = n_blocks * BLOCKSIZE;
         let mut last_block = Block::new();
-        last_block.update_raw(0, &msg[k..k + rem]);
+        last_block.update_sub(0, &msg, k, rem);
         acc = update(r, last_block, acc);
     }
     acc
