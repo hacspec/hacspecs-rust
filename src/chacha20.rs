@@ -5,12 +5,12 @@ hacspec_imports!();
 // Type definitions for use in chacha.
 
 // These are type aliases for convenience
-type State = [u32; 16];
 
 // These are actual types; fixed-length arrays.
-array!(StateBytes, 64, u8);
-array!(IV, 12, u8);
-array!(Key, 32, u8);
+array!(State, 16, u32);
+bytes!(StateBytes, 64);
+bytes!(IV, 12);
+bytes!(Key, 32);
 
 pub fn state_to_bytes(x: State) -> StateBytes {
     let mut r = StateBytes::new();
@@ -55,7 +55,7 @@ fn double_round(m: State) -> State {
 }
 
 pub fn block_init(key: Key, ctr: u32, iv: IV) -> State {
-    [
+    State([
         0x6170_7865,
         0x3320_646e,
         0x7962_2d32,
@@ -72,7 +72,7 @@ pub fn block_init(key: Key, ctr: u32, iv: IV) -> State {
         u32::from_le_bytes(iv.get(0..4)),
         u32::from_le_bytes(iv.get(4..8)),
         u32::from_le_bytes(iv.get(8..12)),
-    ]
+    ])
 }
 
 #[wrappit]

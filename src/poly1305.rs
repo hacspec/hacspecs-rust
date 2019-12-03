@@ -10,7 +10,7 @@ const BLOCKSIZE: usize = 16;
 // Type definitions for use in poly1305.
 
 // These are type aliases for convenience
-type Block = [u8; BLOCKSIZE];
+bytes!(Block, BLOCKSIZE);
 
 // These are actual types; fixed-length arrays.
 array!(Tag, BLOCKSIZE, u8);
@@ -25,7 +25,7 @@ fn key_gen(key: Key, iv: IV) -> Key {
 }
 
 fn encode_r(r: Block) -> FieldElement {
-    let r_uint = u128::from_le_bytes(r);
+    let r_uint = r.to_u128_le();
     let r_uint = r_uint & 0x0fff_fffc_0fff_fffc_0fff_fffc_0fff_ffff;
     FieldElement::from(r_uint)
 }

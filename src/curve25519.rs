@@ -11,8 +11,8 @@ struct FieldElement;
 struct Scalar;
 
 type Point = (FieldElement, FieldElement);
-array!(SerializedPoint, 32, u8);
-array!(SerializedScalar, 32, u8);
+bytes!(SerializedPoint, 32);
+bytes!(SerializedScalar, 32);
 
 fn mask_scalar(s: SerializedScalar) -> SerializedScalar {
     let mut k = s;

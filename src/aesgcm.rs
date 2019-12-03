@@ -4,8 +4,7 @@ hacspec_imports!();
 
 // Import aes and gcm
 use crate::aes;
-use crate::aes::{aes128_ctr_keyblock, aes128_decrypt, aes128_encrypt};
-use crate::gf128;
+use crate::aes::{aes128_ctr_keyblock, aes128_encrypt, aes128_decrypt};
 use crate::gf128::{gmac, Tag};
 
 fn pad_aad_msg(aad: Bytes, msg: Bytes) -> Bytes {
