@@ -21,7 +21,7 @@ struct FieldElement;
 
 fn key_gen(key: Key, iv: IV) -> Key {
     let block = chacha20::block(key, 0, iv);
-    Key::from_array(block.get(0..32))
+    block.get(0..32)
 }
 
 fn encode_r(r: Block) -> FieldElement {
@@ -46,7 +46,7 @@ fn poly_inner(m: Bytes, r: FieldElement) -> FieldElement {
 }
 
 pub fn poly(m: Bytes, key: Key) -> Tag {
-    let s_elem = FieldElement::from(u128::from_le_bytes(key.get(BLOCKSIZE..2 * BLOCKSIZE)));
+    let s_elem = FieldElement::from(u128_from_le_bytes(key.get(BLOCKSIZE..2 * BLOCKSIZE)));
     let r_elem = encode_r(key.get(0..BLOCKSIZE));
     let a = poly_inner(m, r_elem);
     let n = a + s_elem;
