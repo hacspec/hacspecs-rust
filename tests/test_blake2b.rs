@@ -21,14 +21,14 @@ fn test_single_block() {
 #[test]
 fn test_single_block_string() {
     let m = String::from("abc");
-    let h = blake2b(Bytes::from_vec(m.into_bytes()));
+    let h = blake2b(Bytes::from_array(&m.into_bytes()));
     assert_eq!(&EXPECTED_ABC[..], &h[..]);
 }
 
 #[test]
 fn test_multi_block_string() {
     let m = String::from("qwertzuiopasdfghjklyxcvbnm123456789qwertzuiopasdfghjklyxcvbnm123456789qwertzuiopasdfghjklyxcvbnm123456789qwertzuiopasdfghjklyxcvbnm123456789");
-    let h = blake2b(Bytes::from_vec(m.into_bytes()));
+    let h = blake2b(Bytes::from_array(&m.into_bytes()));
 
     let expected: [u8; 64] = [
         0x5c, 0xc9, 0x7c, 0x7f, 0x9f, 0xf2, 0x00, 0x8b, 0x40, 0x12, 0x6f, 0x37, 0x3f, 0x43, 0x33,
@@ -43,7 +43,7 @@ fn test_multi_block_string() {
 #[test]
 fn test_multi_block_string_longer() {
     let m = String::from("qwertzuiopasdfghjklyxcvbnm123456789qwertzuiopasdfghjklyxcvbnm123456789qwertzuiopasdfghjklyxcvbnm123456789qwertzuiopasdfghjklyxcvbnm123456789qwertzuiopasdfghjklyxcvbnm123456789qwertzuiopasdfghjklyxcvbnm123456789qwertzuiopasdfghjklyxcvbnm123456789qwertzuiopasdfghjklyxcvbnm123456789");
-    let h = blake2b(Bytes::from_vec(m.into_bytes()));
+    let h = blake2b(Bytes::from_array(&m.into_bytes()));
 
     let expected: [u8; 64] = [
         0x1f, 0x9e, 0xe6, 0x5a, 0xa0, 0x36, 0x05, 0xfc, 0x41, 0x0e, 0x2f, 0x55, 0x96, 0xfd, 0xb5,
