@@ -37,9 +37,11 @@ fn encode(block: Bytes) -> FieldElement {
 }
 
 fn poly_inner(m: Bytes, r: FieldElement) -> FieldElement {
-    let blocks = m.split(BLOCKSIZE);
     let mut acc = FieldElement::from(0);
-    for b in blocks {
+    for i in (0..m.len()).step_by(BLOCKSIZE) {
+        let block_len = min(BLOCKSIZE, m.len() - i);
+        let mut b = Seq::new_len(block_len);
+        b.update_sub(0, &m, i, block_len);
         acc = (acc + encode(b)) * r;
     }
     acc
