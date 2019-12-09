@@ -25,7 +25,9 @@ fn key_gen(key: Key, iv: IV) -> Key {
 }
 
 fn encode_r(r: Block) -> FieldElement {
-    let r_uint = r.to_u128_le();
+    let mut r_128 = U128Word::new();
+    r_128.update_sub(0, &r, 0, BLOCKSIZE);
+    let r_uint = u128_from_le_bytes(r_128);
     let r_uint = r_uint & 0x0fff_fffc_0fff_fffc_0fff_fffc_0fff_ffff;
     FieldElement::from(r_uint)
 }

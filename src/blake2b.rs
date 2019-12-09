@@ -51,7 +51,7 @@ fn mix(v: DoubleState, a: usize, b: usize, c: usize, d: usize, x: u64, y: u64) -
 // TODO: add test case where counter wraps
 #[wrappit]
 fn inc_counter(t: Counter, x: u64) -> Counter {
-    let mut result: Counter = Counter::from_array([0u64; 2]);
+    let mut result: Counter = Counter([0u64; 2]);
     result[0] = t[0] + x;
     if result[0] < x {
         result[1] = t[1] + 1;
@@ -143,7 +143,7 @@ pub fn blake2b(data: Bytes) -> Digest {
     // This only supports the 512 version without key.
     h[0] = h[0] ^ 0x0101_0000 ^ 64;
 
-    let mut t = Counter::from_array([0; 2]);
+    let mut t = Counter([0; 2]);
     let blocks = data.len() / 128;
     for i in 0..blocks {
         let m = Buffer::from(&data[i * 128..i * 128 + 128]);

@@ -247,7 +247,7 @@ fn test_contract2() {
 
 #[test]
 fn test_kat_block1() {
-    let msg = Bytes::from_array(&[
+    let msg = Block([
         0x6b, 0xc1, 0xbe, 0xe2, 0x2e, 0x40, 0x9f, 0x96, 0xe9, 0x3d, 0x7e, 0x11, 0x73, 0x93, 0x17,
         0x2a,
     ]);
@@ -260,13 +260,13 @@ fn test_kat_block1() {
         0x97,
     ];
 
-    let c = aes128_encrypt_block(key, Block::from(msg.raw()));
+    let c = aes128_encrypt_block(key, msg);
     assert_eq!(ctxt[..], c[..]);
 }
 
 #[test]
 fn test_kat_block2() {
-    let msg = Bytes::from_array(&[
+    let msg = Block([
         0x53, 0x69, 0x6e, 0x67, 0x6c, 0x65, 0x20, 0x62, 0x6c, 0x6f, 0x63, 0x6b, 0x20, 0x6d, 0x73,
         0x67,
     ]);
@@ -278,6 +278,6 @@ fn test_kat_block2() {
         0x61, 0x5f, 0x9, 0xfb, 0x35, 0x3f, 0x61, 0x3b, 0xa2, 0x8f, 0xf3, 0xa3, 0xc, 0x64, 0x75,
         0x2d,
     ]);
-    let c = aes128_encrypt_block(key, Block::from(msg.raw()));
+    let c = aes128_encrypt_block(key, msg);
     assert_eq!(ctxt.raw()[..], c[..]);
 }

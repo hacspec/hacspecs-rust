@@ -4,8 +4,8 @@ hacspec_imports!();
 
 // Import aes and gcm
 use crate::aes;
-use crate::aes::{aes128_ctr_keyblock, aes128_encrypt, aes128_decrypt};
-use crate::gf128::{gmac, Tag};
+use crate::aes::{aes128_ctr_keyblock, aes128_encrypt, aes128_decrypt, Block};
+use crate::gf128::{gmac, Tag, Key};
 
 fn pad_aad_msg(aad: Bytes, msg: Bytes) -> Bytes {
     let laad = aad.len();
@@ -37,10 +37,10 @@ pub fn encrypt(key: aes::Key, iv: aes::Nonce, aad: Bytes, msg: Bytes) -> (Bytes,
 
     let cipher_text = aes128_encrypt(key, iv, 2, msg);
     let padded_msg = pad_aad_msg(aad, cipher_text.clone());
-    let tag = gmac(padded_msg, mac_key.raw().into());
-    let tag = aes::xor_block(tag.raw().into(), tag_mix);
+    let tag = gmac(padded_msg, Key::from_exact_seq(&mac_key));
+    let tag = aes::xor_block(Block::from_exact_seq(&tag), tag_mix);
 
-    (cipher_text, tag.raw().into())
+    (cipher_text, Tag::from_exact_seq(&tag))
 }
 
 pub fn decrypt(
@@ -56,11 +56,10 @@ pub fn decrypt(
     let tag_mix = aes128_ctr_keyblock(key, iv, 1);
 
     let padded_msg = pad_aad_msg(aad, cipher_text.clone());
-    let my_tag = gmac(padded_msg, mac_key.raw().into());
-    let my_tag = aes::xor_block(my_tag.raw().into(), tag_mix);
-    let my_tag: Tag = my_tag.raw().into();
+    let my_tag = gmac(padded_msg, Key::from_exact_seq(&mac_key));
+    let my_tag = aes::xor_block(Block::from_exact_seq(&my_tag), tag_mix);
 
-    if my_tag == tag {
+    if my_tag == Block::from_exact_seq(&tag) {
         Ok(aes128_decrypt(key, iv, 2, cipher_text))
     } else {
         Err("Mac verification failed".to_string())
