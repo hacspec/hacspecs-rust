@@ -15,7 +15,7 @@ bytes!(Key, 32);
 pub fn state_to_bytes(x: State) -> StateBytes {
     let mut r = StateBytes::new();
     for i in 0..x.len() {
-        let bytes = Bytes::from_u32l(x[i]);
+        let bytes = u32_to_le_bytes(x[i]);
         r[i * 4] = bytes[3];
         r[i * 4 + 1] = bytes[2];
         r[i * 4 + 2] = bytes[1];

@@ -31,7 +31,9 @@ fn encode_r(r: Block) -> FieldElement {
 }
 
 fn encode(block: Bytes) -> FieldElement {
-    let w_elem = FieldElement::from(block.to_le_uint());
+    let mut block_as_u128 = U128Word::new();
+    block_as_u128.update_sub(0, &block, 0, min(16, block.len()));
+    let w_elem = FieldElement::from(u128_from_le_bytes(block_as_u128));
     let l_elem = FieldElement::pow2(8 * block.len());
     w_elem + l_elem
 }
