@@ -53,13 +53,15 @@ fn kat_test() {
     for kat in KAT.iter() {
         let k = aes::Key::from(kat.key);
         let nonce = aes::Nonce::from(kat.nonce);
+        let exp_mac = gf128::Tag::from(kat.exp_mac);
         let msg = Bytes::from(kat.msg);
         let aad = Bytes::from(kat.aad);
         let exp_cipher = Bytes::from(kat.exp_cipher);
-        let exp_mac = gf128::Tag::from(kat.exp_mac);
+
         let (cipher, mac) = encrypt(k, nonce, aad.clone(), msg.clone());
-        assert_eq!(exp_cipher, cipher.clone());
+        assert_eq!(exp_cipher, cipher);
         assert_eq!(exp_mac, mac);
+
         let decrypted_msg = decrypt(k, nonce, aad, cipher, mac).unwrap();
         assert_eq!(msg, decrypted_msg);
     }
