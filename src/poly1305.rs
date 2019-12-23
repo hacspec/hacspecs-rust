@@ -13,14 +13,14 @@ const BLOCKSIZE: usize = 16;
 bytes!(Block, BLOCKSIZE);
 
 // These are actual types; fixed-length arrays.
-array!(Tag, BLOCKSIZE, u8);
+bytes!(Tag, BLOCKSIZE);
 
 // Define the Poly1305 field and field elements.
 #[field(3fffffffffffffffffffffffffffffffb)]
 struct FieldElement;
 
 fn key_gen(key: Key, iv: IV) -> Key {
-    let block = chacha20::block(key, 0, iv);
+    let block = chacha20::block(key, U32(0), iv);
     block.get(0..32)
 }
 
@@ -28,14 +28,14 @@ fn encode_r(r: Block) -> FieldElement {
     let mut r_128 = U128Word::new();
     r_128.update_sub(0, &r, 0, BLOCKSIZE);
     let r_uint = u128_from_le_bytes(r_128);
-    let r_uint = r_uint & 0x0fff_fffc_0fff_fffc_0fff_fffc_0fff_ffff;
-    FieldElement::from(r_uint)
+    let r_uint = r_uint & U128(0x0fff_fffc_0fff_fffc_0fff_fffc_0fff_ffff);
+    FieldElement::from(U128::declassify(r_uint))
 }
 
 fn encode(block: Bytes) -> FieldElement {
     let mut block_as_u128 = U128Word::new();
     block_as_u128.update_sub(0, &block, 0, min(16, block.len()));
-    let w_elem = FieldElement::from(u128_from_le_bytes(block_as_u128));
+    let w_elem = FieldElement::from(U128::declassify(u128_from_le_bytes(block_as_u128)));
     let l_elem = FieldElement::pow2(8 * block.len());
     w_elem + l_elem
 }
@@ -52,13 +52,13 @@ fn poly_inner(m: Bytes, r: FieldElement) -> FieldElement {
 }
 
 pub fn poly(m: Bytes, key: Key) -> Tag {
-    let s_elem = FieldElement::from(u128_from_le_bytes(key.get(BLOCKSIZE..2 * BLOCKSIZE)));
+    let s_elem = FieldElement::from(U128::declassify(u128_from_le_bytes(key.get(BLOCKSIZE..2 * BLOCKSIZE))));
     let r_elem = encode_r(key.get(0..BLOCKSIZE));
     let a = poly_inner(m, r_elem);
     let n = a + s_elem;
     // Note that n might be less than 16 byte -> zero-pad; but might also be
     // larger than Tag::capacity().
-    Tag::from_vec_lazy(n.to_bytes_le())
+    Tag::from_vec_lazy(n.to_bytes_le().iter().map(|x| U8::classify(*x)).collect::<Vec<_>>())
 }
 
 pub fn poly_mac(m: Bytes, key: Key, iv: IV) -> Tag {

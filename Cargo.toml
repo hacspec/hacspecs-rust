@@ -5,7 +5,7 @@ authors = ["Franziskus Kiefer <franziskuskiefer@gmail.com>"]
 edition = "2018"
 
 [dependencies]
-rand = "0.6" 
+rand = "0.6"
 num = "0.2"
 hacspec = "0.1"
 wrapping_arithmetic = "0.1"
@@ -13,6 +13,8 @@ contracts = "0.3"
 paste = "0.1"
 uint = { git = "https://github.com/franziskuskiefer/rust-uint-n" }
 # uint = { path = "../rust-uint-n" }
+
+secret_integers = "0.1.5"
 
 [patch.crates-io]
 # wrapping_arithmetic = { git = "https://github.com/franziskuskiefer/wrapping-arithmetic" }

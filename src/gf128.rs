@@ -7,9 +7,9 @@ hacspec_imports!();
 
 const BLOCKSIZE: usize = 16;
 // TODO: these should all cast to each other without into
-array!(Block, BLOCKSIZE, u8);
-array!(Key, BLOCKSIZE, u8);
-array!(Tag, BLOCKSIZE, u8);
+bytes!(Block, BLOCKSIZE);
+bytes!(Key, BLOCKSIZE);
+bytes!(Tag, BLOCKSIZE);
 
 // TODO: Use a 128-bit uint_n instead?
 type Element = u128;
@@ -39,11 +39,13 @@ fn fmul(x: Element, y: Element) -> Element {
 
 // TODO: block is actually subblock
 fn encode(block: Block) -> Element {
-    Element::from_be_bytes(block.into())
+    let i : [u8; 16] = [0; 16];
+    i.copy_from_slice(&block.iter().map(|x| U8::declassify(*x)).collect::<Vec<_>>());
+    Element::from_be_bytes(i)
 }
 
 fn decode(e: Element) -> Block {
-    Block(e.to_be_bytes())
+    Block::from(U128::to_bytes_be(&[U128(e)]))
 }
 
 // TODO: block is actually subblock

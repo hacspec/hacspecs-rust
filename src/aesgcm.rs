@@ -23,8 +23,8 @@ fn pad_aad_msg(aad: Bytes, msg: Bytes) -> Bytes {
     let mut padded_msg = Bytes::new_len(pad_aad + pad_msg + 16);
     padded_msg.update(0, &aad);
     padded_msg.update(pad_aad, &msg);
-    padded_msg.update(pad_aad + pad_msg, &u64_to_be_bytes(laad as u64 * 8));
-    padded_msg.update(pad_aad + pad_msg + 8, &u64_to_be_bytes(lmsg as u64 * 8));
+    padded_msg.update(pad_aad + pad_msg, &u64_to_be_bytes(U64(laad as u64) * U64(8)));
+    padded_msg.update(pad_aad + pad_msg + 8, &u64_to_be_bytes(U64(lmsg as u64) * U64(8)));
     padded_msg
 }
 
@@ -32,10 +32,10 @@ fn pad_aad_msg(aad: Bytes, msg: Bytes) -> Bytes {
 pub fn encrypt(key: aes::Key, iv: aes::Nonce, aad: Bytes, msg: Bytes) -> (Bytes, Tag) {
     let iv0 = aes::Nonce::new();
 
-    let mac_key = aes128_ctr_keyblock(key, iv0, 0);
-    let tag_mix = aes128_ctr_keyblock(key, iv, 1);
+    let mac_key = aes128_ctr_keyblock(key, iv0, U32(0));
+    let tag_mix = aes128_ctr_keyblock(key, iv, U32(1));
 
-    let cipher_text = aes128_encrypt(key, iv, 2, msg);
+    let cipher_text = aes128_encrypt(key, iv, U32(2), msg);
     let padded_msg = pad_aad_msg(aad, cipher_text.clone());
     let tag = gmac(padded_msg, Key::from_exact_seq(&mac_key));
     let tag = aes::xor_block(Block::from_exact_seq(&tag), tag_mix);
@@ -52,15 +52,15 @@ pub fn decrypt(
 ) -> Result<Bytes, String> {
     let iv0 = aes::Nonce::new();
 
-    let mac_key = aes128_ctr_keyblock(key, iv0, 0);
-    let tag_mix = aes128_ctr_keyblock(key, iv, 1);
+    let mac_key = aes128_ctr_keyblock(key, iv0, U32(0));
+    let tag_mix = aes128_ctr_keyblock(key, iv, U32(1));
 
     let padded_msg = pad_aad_msg(aad, cipher_text.clone());
     let my_tag = gmac(padded_msg, Key::from_exact_seq(&mac_key));
     let my_tag = aes::xor_block(Block::from_exact_seq(&my_tag), tag_mix);
 
     if my_tag == Block::from_exact_seq(&tag) {
-        Ok(aes128_decrypt(key, iv, 2, cipher_text))
+        Ok(aes128_decrypt(key, iv, U32(2), cipher_text))
     } else {
         Err("Mac verification failed".to_string())
     }

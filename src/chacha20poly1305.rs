@@ -23,13 +23,13 @@ fn pad_aad_msg(aad: Bytes, msg: Bytes) -> Bytes {
     let mut padded_msg = Bytes::new_len(pad_aad + pad_msg + 16);
     padded_msg.update(0, &aad);
     padded_msg.update(pad_aad, &msg);
-    padded_msg.update(pad_aad + pad_msg, &u64_to_le_bytes(laad as u64));
-    padded_msg.update(pad_aad + pad_msg + 8, &u64_to_le_bytes(lmsg as u64));
+    padded_msg.update(pad_aad + pad_msg, &u64_to_le_bytes(U64(laad as u64)));
+    padded_msg.update(pad_aad + pad_msg + 8, &u64_to_le_bytes(U64(lmsg as u64)));
     padded_msg
 }
 
 pub fn encrypt(key: Key, iv: IV, aad: Bytes, msg: Bytes) -> Result<(Bytes, Tag), String> {
-    let key_block = block(key, 0, iv);
+    let key_block = block(key, U32(0), iv);
     let mac_key = Key::from(&key_block[0..32]);
     let cipher_text = match chacha(key, iv, msg) {
         Ok(c) => c,
@@ -50,7 +50,7 @@ pub fn decrypt(
     cipher_text: Bytes,
     tag: Tag,
 ) -> Result<Bytes, String> {
-    let key_block = block(key, 0, iv);
+    let key_block = block(key, U32(0), iv);
     let mac_key = key_block.get(0..32);
     let padded_msg = pad_aad_msg(aad, cipher_text.clone());
     let my_tag = poly(padded_msg, mac_key);

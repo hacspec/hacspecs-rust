@@ -2,12 +2,12 @@
 use hacspec::*;
 hacspec_imports!();
 
-array!(State, 8, u64);
-array!(DoubleState, 16, u64);
-array!(Counter, 2, u64);
+array!(State, 8, U64, u64);
+array!(DoubleState, 16, U64, u64);
+array!(Counter, 2,  u64, u64);
 bytes!(Buffer, 128);
 bytes!(Digest, 64);
-array!(Sigma, 16 * 12, usize);
+array!(Sigma, 16 * 12, usize, usize);
 
 static SIGMA: Sigma = Sigma([
     0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 14, 10, 4, 8, 9, 15, 13, 6, 1, 12, 0, 2,
@@ -20,18 +20,17 @@ static SIGMA: Sigma = Sigma([
 ]);
 
 static IV: State = State([
-    0x6a09_e667_f3bc_c908u64,
-    0xbb67_ae85_84ca_a73bu64,
-    0x3c6e_f372_fe94_f82bu64,
-    0xa54f_f53a_5f1d_36f1u64,
-    0x510e_527f_ade6_82d1u64,
-    0x9b05_688c_2b3e_6c1fu64,
-    0x1f83_d9ab_fb41_bd6bu64,
-    0x5be0_cd19_137e_2179u64,
+    U64(0x6a09_e667_f3bc_c908u64),
+    U64(0xbb67_ae85_84ca_a73bu64),
+    U64(0x3c6e_f372_fe94_f82bu64),
+    U64(0xa54f_f53a_5f1d_36f1u64),
+    U64(0x510e_527f_ade6_82d1u64),
+    U64(0x9b05_688c_2b3e_6c1fu64),
+    U64(0x1f83_d9ab_fb41_bd6bu64),
+    U64(0x5be0_cd19_137e_2179u64),
 ]);
 
-#[wrappit]
-fn mix(v: DoubleState, a: usize, b: usize, c: usize, d: usize, x: u64, y: u64) -> DoubleState {
+fn mix(v: DoubleState, a: usize, b: usize, c: usize, d: usize, x: U64, y: U64) -> DoubleState {
     let mut result = v;
     result[a] = result[a] + result[b] + x;
     result[d] = (result[d] ^ result[a]).rotate_right(32);
@@ -49,7 +48,6 @@ fn mix(v: DoubleState, a: usize, b: usize, c: usize, d: usize, x: u64, y: u64) -
 }
 
 // TODO: add test case where counter wraps
-#[wrappit]
 fn inc_counter(t: Counter, x: u64) -> Counter {
     let mut result: Counter = Counter([0u64; 2]);
     result[0] = t[0] + x;
@@ -62,14 +60,14 @@ fn inc_counter(t: Counter, x: u64) -> Counter {
 fn make_u64array(h: Buffer) -> DoubleState {
     let mut result = DoubleState::new();
     for i in 0..16 {
-        result[i] = u64::from(h[8 * i])
-            | u64::from(h[1 + 8 * i]) << 8
-            | u64::from(h[2 + 8 * i]) << 16
-            | u64::from(h[3 + 8 * i]) << 24
-            | u64::from(h[4 + 8 * i]) << 32
-            | u64::from(h[5 + 8 * i]) << 40
-            | u64::from(h[6 + 8 * i]) << 48
-            | u64::from(h[7 + 8 * i]) << 56;
+        result[i] = U64::from(h[8 * i])
+            | U64::from(h[1 + 8 * i]) << 8
+            | U64::from(h[2 + 8 * i]) << 16
+            | U64::from(h[3 + 8 * i]) << 24
+            | U64::from(h[4 + 8 * i]) << 32
+            | U64::from(h[5 + 8 * i]) << 40
+            | U64::from(h[6 + 8 * i]) << 48
+            | U64::from(h[7 + 8 * i]) << 56;
     }
     result
 }
@@ -91,8 +89,8 @@ fn compress(h: State, m: Buffer, t: Counter, last_block: bool) -> State {
     // }
     let foo0: u64 = t[0];
     let foo1: u64 = t[1];
-    v[12] ^= foo0;
-    v[13] ^= foo1;
+    v[12] ^= U64::classify(foo0);
+    v[13] ^= U64::classify(foo1);
     if last_block {
         v[14] = !v[14];
     }
@@ -124,24 +122,24 @@ fn compress(h: State, m: Buffer, t: Counter, last_block: bool) -> State {
     compressed
 }
 
-fn get_byte(x: u64, i: usize) -> u8 {
+fn get_byte(x: U64, i: usize) -> U8 {
     match i {
-        0 => (x & 0xFFu64) as u8,
-        1 => ((x & 0xFF00u64) >> 8) as u8,
-        2 => ((x & 0xFF0000u64) >> 16) as u8,
-        3 => ((x & 0xFF000000u64) >> 24) as u8,
-        4 => ((x & 0xFF00000000u64) >> 32) as u8,
-        5 => ((x & 0xFF0000000000u64) >> 40) as u8,
-        6 => ((x & 0xFF000000000000u64) >> 48) as u8,
-        7 => ((x & 0xFF00000000000000u64) >> 56) as u8,
-        _ => 0 as u8,
+        0 => U8::from(x & U64(0xFF)),
+        1 => U8::from((x & U64(0xFF00)) >> 8),
+        2 => U8::from((x & U64(0xFF0000)) >> 16),
+        3 => U8::from((x & U64(0xFF000000)) >> 24),
+        4 => U8::from((x & U64(0xFF00000000)) >> 32),
+        5 => U8::from((x & U64(0xFF0000000000)) >> 40),
+        6 => U8::from((x & U64(0xFF000000000000)) >> 48),
+        7 => U8::from((x & U64(0xFF00000000000000)) >> 56),
+        _ => U8(0),
     }
 }
 
 pub fn blake2b(data: Bytes) -> Digest {
     let mut h = IV;
     // This only supports the 512 version without key.
-    h[0] = h[0] ^ 0x0101_0000 ^ 64;
+    h[0] = h[0] ^ U64(0x0101_0000) ^ U64(64);
 
     let mut t = Counter([0; 2]);
     let blocks = data.len() / 128;
