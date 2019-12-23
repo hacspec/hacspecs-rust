@@ -39,7 +39,7 @@ fn fmul(x: Element, y: Element) -> Element {
 
 // TODO: block is actually subblock
 fn encode(block: Block) -> Element {
-    let i : [u8; 16] = [0; 16];
+    let mut i : [u8; 16] = [0; 16];
     i.copy_from_slice(&block.iter().map(|x| U8::declassify(*x)).collect::<Vec<_>>());
     Element::from_be_bytes(i)
 }

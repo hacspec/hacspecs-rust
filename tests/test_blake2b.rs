@@ -1,5 +1,6 @@
 extern crate hacspec;
 use hacspec::*;
+hacspec_imports!();
 
 extern crate hacspecs;
 use hacspecs::blake2b::*;
@@ -13,22 +14,28 @@ static EXPECTED_ABC: [u8; 64] = [
 
 #[test]
 fn test_single_block() {
-    let m = Bytes::from_array(&[0x61u8, 0x62, 0x63]);
+    let m = Bytes::from_array(&[U8(0x61), U8(0x62), U8(0x63)]);
     let h = blake2b(m);
-    assert_eq!(&EXPECTED_ABC[..], &h[..]);
+    assert_eq!(
+        &EXPECTED_ABC[..].iter().map(|x| *x).collect::<Vec<_>>(),
+        &h[..].iter().map(|x| U8::declassify(*x)).collect::<Vec<_>>()
+    );
 }
 
 #[test]
 fn test_single_block_string() {
     let m = String::from("abc");
-    let h = blake2b(Bytes::from_array(&m.into_bytes()));
-    assert_eq!(&EXPECTED_ABC[..], &h[..]);
+    let h = blake2b(Bytes::from_array(&m.into_bytes().iter().map(|x| U8::classify(*x)).collect::<Vec<_>>()));
+    assert_eq!(
+        &EXPECTED_ABC[..].iter().map(|x| *x).collect::<Vec<_>>(),
+        &h[..].iter().map(|x| U8::declassify(*x)).collect::<Vec<_>>()
+    );
 }
 
 #[test]
 fn test_multi_block_string() {
     let m = String::from("qwertzuiopasdfghjklyxcvbnm123456789qwertzuiopasdfghjklyxcvbnm123456789qwertzuiopasdfghjklyxcvbnm123456789qwertzuiopasdfghjklyxcvbnm123456789");
-    let h = blake2b(Bytes::from_array(&m.into_bytes()));
+    let h = blake2b(Bytes::from_array(&m.into_bytes().iter().map(|x| U8::classify(*x)).collect::<Vec<_>>()));
 
     let expected: [u8; 64] = [
         0x5c, 0xc9, 0x7c, 0x7f, 0x9f, 0xf2, 0x00, 0x8b, 0x40, 0x12, 0x6f, 0x37, 0x3f, 0x43, 0x33,
@@ -37,13 +44,16 @@ fn test_multi_block_string() {
         0x0a, 0x17, 0x87, 0xd0, 0xc6, 0xd9, 0x62, 0x77, 0x9c, 0xbc, 0x58, 0xbf, 0xdf, 0x89, 0x48,
         0x1c, 0x87, 0x46, 0x96,
     ];
-    assert_eq!(&expected[..], &h[..]);
+    assert_eq!(
+        &expected[..].iter().map(|x| *x).collect::<Vec<_>>(),
+        &h[..].iter().map(|x| U8::declassify(*x)).collect::<Vec<_>>()
+    );
 }
 
 #[test]
 fn test_multi_block_string_longer() {
     let m = String::from("qwertzuiopasdfghjklyxcvbnm123456789qwertzuiopasdfghjklyxcvbnm123456789qwertzuiopasdfghjklyxcvbnm123456789qwertzuiopasdfghjklyxcvbnm123456789qwertzuiopasdfghjklyxcvbnm123456789qwertzuiopasdfghjklyxcvbnm123456789qwertzuiopasdfghjklyxcvbnm123456789qwertzuiopasdfghjklyxcvbnm123456789");
-    let h = blake2b(Bytes::from_array(&m.into_bytes()));
+    let h = blake2b(Bytes::from_array(&m.into_bytes().iter().map(|x| U8::classify(*x)).collect::<Vec<_>>()));
 
     let expected: [u8; 64] = [
         0x1f, 0x9e, 0xe6, 0x5a, 0xa0, 0x36, 0x05, 0xfc, 0x41, 0x0e, 0x2f, 0x55, 0x96, 0xfd, 0xb5,
@@ -52,5 +62,8 @@ fn test_multi_block_string_longer() {
         0xf4, 0x02, 0x17, 0x7f, 0x76, 0x56, 0x26, 0x46, 0xf4, 0x07, 0xfd, 0x1f, 0x78, 0xdb, 0x7b,
         0x0d, 0x24, 0x43, 0xf0,
     ];
-    assert_eq!(&expected[..], &h[..]);
+    assert_eq!(
+        &expected[..].iter().map(|x| *x).collect::<Vec<_>>(),
+        &h[..].iter().map(|x| U8::declassify(*x)).collect::<Vec<_>>()
+    );
 }

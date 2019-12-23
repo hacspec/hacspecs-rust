@@ -1,5 +1,6 @@
 extern crate hacspec;
 use hacspec::*;
+hacspec_imports!();
 
 extern crate hacspecs;
 use hacspecs::{aes, aesgcm::*, gf128};
@@ -59,10 +60,19 @@ fn kat_test() {
         let exp_cipher = Bytes::from(kat.exp_cipher);
 
         let (cipher, mac) = encrypt(k, nonce, aad.clone(), msg.clone());
-        assert_eq!(exp_cipher, cipher);
-        assert_eq!(exp_mac, mac);
+        assert_eq!(
+            exp_cipher.iter().map(|x| U8::declassify(*x)).collect::<Vec<_>>(),
+            cipher.iter().map(|x| U8::declassify(*x)).collect::<Vec<_>>()
+        );
+        assert_eq!(
+            exp_mac.iter().map(|x| U8::declassify(*x)).collect::<Vec<_>>(),
+            mac.iter().map(|x| U8::declassify(*x)).collect::<Vec<_>>()
+        );
 
         let decrypted_msg = decrypt(k, nonce, aad, cipher, mac).unwrap();
-        assert_eq!(msg, decrypted_msg);
+        assert_eq!(
+            msg.iter().map(|x| U8::declassify(*x)).collect::<Vec<_>>(),
+            decrypted_msg.iter().map(|x| U8::declassify(*x)).collect::<Vec<_>>()
+        );
     }
 }

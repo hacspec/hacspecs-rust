@@ -26,8 +26,10 @@ pub fn state_to_bytes(x: State) -> StateBytes {
 
 fn line(a: usize, b: usize, d: usize, s: usize, m: State) -> State {
     let mut state = m;
-    state[a] += state[b];
-    state[d] ^= state[a];
+    let sb = state[b];
+    state[a] += sb;
+    let sa = state[a];
+    state[d] ^= sa;
     // TODO: The 32 here is interpreted as i32 on Linux (not on Windows),
     //       where .wrapping_sub is not defined.
     state[d] = state[d] << s as u32 | state[d] >> (32usize - s) as u32;
