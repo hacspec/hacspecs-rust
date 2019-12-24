@@ -7,7 +7,8 @@ edition = "2018"
 [dependencies]
 rand = "0.6"
 num = "0.2"
-hacspec = "0.1"
+hacspec = { git = "https://github.com/hacspec/hacspec-rust", branch="denismerigoux_formalization" }
+# hacspec = { path = "../hacspec-rust" }
 wrapping_arithmetic = "0.1"
 contracts = "0.3"
 paste = "0.1"
@@ -15,8 +16,5 @@ uint = { git = "https://github.com/franziskuskiefer/rust-uint-n" }
 # uint = { path = "../rust-uint-n" }
 
 secret_integers = "0.1.5"
-
-[patch.crates-io]
-# wrapping_arithmetic = { git = "https://github.com/franziskuskiefer/wrapping-arithmetic" }
-# hacspec = { git = "https://github.com/hacspec/hacspec-rust" }
-hacspec = { path = "../hacspec-rust" }
+abstract_integers = { git = "https://github.com/denismerigoux/rust-abstract-integers" }
+# abstract_integers = { path = "../rust-abstract-integers" }
