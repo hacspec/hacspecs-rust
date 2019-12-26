@@ -16,5 +16,5 @@ uint = { git = "https://github.com/franziskuskiefer/rust-uint-n" }
 # uint = { path = "../rust-uint-n" }
 
 secret_integers = "0.1.5"
-abstract_integers = { git = "https://github.com/denismerigoux/rust-abstract-integers" }
-# abstract_integers = { path = "../rust-abstract-integers" }
+# abstract_integers = { git = "https://github.com/denismerigoux/rust-abstract-integers" }
+abstract_integers = { path = "../rust-abstract-integers" }
