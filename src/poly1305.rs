@@ -2,8 +2,6 @@
 use hacspec::*;
 hacspec_imports!();
 
-use abstract_integers::{define_abstract_integer_checked, define_refined_modular_integer};
-
 // Import chacha20
 use crate::chacha20;
 use crate::chacha20::*;

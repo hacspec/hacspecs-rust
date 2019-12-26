@@ -2,8 +2,6 @@
 use hacspec::*;
 hacspec_imports!();
 
-use abstract_integers::{define_abstract_integer_checked, define_refined_modular_integer};
-
 define_abstract_integer_checked!(FieldCanvas, 512);
 
 // Define field mod 2^255-19

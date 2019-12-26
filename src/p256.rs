@@ -2,8 +2,6 @@
 use hacspec::*;
 hacspec_imports!();
 
-use abstract_integers::{define_abstract_integer_checked, define_refined_modular_integer};
-
 define_abstract_integer_checked!(FieldCanvas, 512);
 
 // Define field P256 (prime: 2**256 - 2**224 + 2**192 + 2**96 - 1)
