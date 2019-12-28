@@ -130,15 +130,15 @@ fn aes_enc_last(state: Block, round_key: Key) -> Block {
 fn rounds(state: Block, key: Bytes144) -> Block {
     let mut out = state;
     for i in 0..9 {
-        out = aes_enc(out, key.get(16 * i..16 * i + 16));
+        out = aes_enc(out, Key::from_sub(key, 16 * i..16 * i + 16));
     }
     out
 }
 
 fn block_cipher(input: Block, key: Bytes176) -> Block {
-    let k0: Key = key.get(0..16);
-    let k: Bytes144 = key.get(16..10 * 16);
-    let kn: Key = key.get(10 * 16..11 * 16);
+    let k0 = Key::from_sub(key, 0..16);
+    let k = Bytes144::from_sub(key, 16..10 * 16);
+    let kn = Key::from_sub(key, 10 * 16..11 * 16);
     let state = add_round_key(input, k0);
     let state = rounds(state, k);
     aes_enc_last(state, kn)
@@ -184,8 +184,8 @@ fn key_expansion(key: Key) -> Bytes176 {
     for j in 0..40 {
         i = j + 4;
         let word = key_expansion_word(
-            key_ex.get(4 * i - 16..4 * i - 12),
-            key_ex.get(4 * i - 4..4 * i),
+            Word::from_sub(key_ex, 4 * i - 16..4 * i - 12),
+            Word::from_sub(key_ex, 4 * i - 4..4 * i),
             i,
         );
         key_ex.update(4 * i, &word);

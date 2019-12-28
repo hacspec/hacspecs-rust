@@ -51,7 +51,7 @@ pub fn decrypt(
     tag: Tag,
 ) -> Result<Bytes, String> {
     let key_block = block(key, U32(0), iv);
-    let mac_key = key_block.get(0..32);
+    let mac_key = Key::from_sub(key_block, 0..32);
     let padded_msg = pad_aad_msg(aad, cipher_text.clone());
     let my_tag = poly(padded_msg, mac_key);
     if my_tag == tag {
