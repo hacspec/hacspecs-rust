@@ -143,7 +143,7 @@ pub fn blake2b(data: Bytes) -> Digest {
     let mut t = Counter([0; 2]);
     let blocks = data.len() / 128;
     for i in 0..blocks {
-        let m = Buffer::from(&data[i * 128..i * 128 + 128]);
+        let m = Buffer::from_sub_pad(data.clone(), i * 128..i * 128 + 128);
         t = inc_counter(t, 128);
         h = compress(h, m, t, false);
     }

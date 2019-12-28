@@ -222,7 +222,10 @@ fn aes128_counter_mode(key: Key, nonce: Nonce, counter: U32, msg: Bytes) -> Byte
     for i in 0..n_blocks {
         let keyblock = aes128_ctr_keyblock(key, nonce, ctr);
         let k = i * BLOCKSIZE;
-        blocks_out = blocks_out.update(k, xor_block(Block::from_sub_pad(msg.clone(),k..k + BLOCKSIZE), keyblock));
+        blocks_out = blocks_out.update(
+            k,
+            xor_block(Block::from_sub_pad(msg.clone(), k..k + BLOCKSIZE), keyblock),
+        );
         ctr += U32(1);
     }
     let keyblock = aes128_ctr_keyblock(key, nonce, ctr);
@@ -305,13 +308,7 @@ fn test_kat_block2() {
     ]);
     let c = aes128_encrypt_block(key, msg);
     assert_eq!(
-        (&ctxt[..])
-            .iter()
-            .map(|x| U8::declassify(*x))
-            .collect::<Vec<_>>(),
-        (&c[..])
-            .iter()
-            .map(|x| U8::declassify(*x))
-            .collect::<Vec<_>>()
+        ctxt.iter().map(|x| U8::declassify(*x)).collect::<Vec<_>>(),
+        c.iter().map(|x| U8::declassify(*x)).collect::<Vec<_>>()
     );
 }
