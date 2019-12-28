@@ -84,8 +84,8 @@ fn compress(h: State, m: Buffer, t: Counter, last_block: bool) -> State {
     let m = make_u64array(m);
 
     // Prepare.
-    v.update_sub(0, &h, 0, 8);
-    v.update_sub(8, &IV, 0, 8);
+    v = v.update_sub(0, h, 0, 8);
+    v = v.update_sub(8, IV, 0, 8);
     let foo0: u64 = t[0];
     let foo1: u64 = t[1];
     v[12] ^= U64::classify(foo0);

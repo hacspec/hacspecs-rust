@@ -21,10 +21,10 @@ fn pad_aad_msg(aad: Bytes, msg: Bytes) -> Bytes {
         lmsg + (16 - (lmsg % 16))
     };
     let mut padded_msg = Bytes::new_len(pad_aad + pad_msg + 16);
-    padded_msg.update(0, &aad);
-    padded_msg.update(pad_aad, &msg);
-    padded_msg.update(pad_aad + pad_msg, &u64_to_be_bytes(U64(laad as u64) * U64(8)));
-    padded_msg.update(pad_aad + pad_msg + 8, &u64_to_be_bytes(U64(lmsg as u64) * U64(8)));
+    padded_msg = padded_msg.update(0, aad);
+    padded_msg = padded_msg.update(pad_aad, msg);
+    padded_msg = padded_msg.update(pad_aad + pad_msg, u64_to_be_bytes(U64(laad as u64) * U64(8)));
+    padded_msg = padded_msg.update(pad_aad + pad_msg + 8, u64_to_be_bytes(U64(lmsg as u64) * U64(8)));
     padded_msg
 }
 
@@ -37,10 +37,10 @@ pub fn encrypt(key: aes::Key, iv: aes::Nonce, aad: Bytes, msg: Bytes) -> (Bytes,
 
     let cipher_text = aes128_encrypt(key, iv, U32(2), msg);
     let padded_msg = pad_aad_msg(aad, cipher_text.clone());
-    let tag = gmac(padded_msg, Key::from_exact_seq(&mac_key));
-    let tag = aes::xor_block(Block::from_exact_seq(&tag), tag_mix);
+    let tag = gmac(padded_msg, Key::copy(mac_key));
+    let tag = aes::xor_block(Block::copy(tag), tag_mix);
 
-    (cipher_text, Tag::from_exact_seq(&tag))
+    (cipher_text, Tag::copy(tag))
 }
 
 pub fn decrypt(
@@ -56,10 +56,10 @@ pub fn decrypt(
     let tag_mix = aes128_ctr_keyblock(key, iv, U32(1));
 
     let padded_msg = pad_aad_msg(aad, cipher_text.clone());
-    let my_tag = gmac(padded_msg, Key::from_exact_seq(&mac_key));
-    let my_tag = aes::xor_block(Block::from_exact_seq(&my_tag), tag_mix);
+    let my_tag = gmac(padded_msg, Key::copy(mac_key));
+    let my_tag = aes::xor_block(Block::copy(my_tag), tag_mix);
 
-    if my_tag == Block::from_exact_seq(&tag) {
+    if my_tag == Block::copy(tag) {
         Ok(aes128_decrypt(key, iv, U32(2), cipher_text))
     } else {
         Err("Mac verification failed".to_string())

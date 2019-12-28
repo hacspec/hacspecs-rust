@@ -179,7 +179,7 @@ fn key_expansion_word(w0: Word, w1: Word, i: usize) -> Word {
 fn key_expansion(key: Key) -> Bytes176 {
     let mut key_ex = Bytes176::new();
     // TODO: get rid of all `into`
-    key_ex.update(0, &key);
+    key_ex = key_ex.update(0, key);
     let mut i: usize;
     for j in 0..40 {
         i = j + 4;
@@ -188,7 +188,7 @@ fn key_expansion(key: Key) -> Bytes176 {
             Word::from_sub(key_ex, 4 * i - 4..4 * i),
             i,
         );
-        key_ex.update(4 * i, &word);
+        key_ex = key_ex.update(4 * i, word);
     }
     key_ex
 }
@@ -200,8 +200,8 @@ fn aes128_encrypt_block(k: Key, input: Block) -> Block {
 
 pub(crate) fn aes128_ctr_keyblock(k: Key, n: Nonce, c: U32) -> Block {
     let mut input = Block::new();
-    input.update(0, &n);
-    input.update(12, &u32_to_be_bytes(c));
+    input = input.update(0, n);
+    input = input.update(12, u32_to_be_bytes(c));
     aes128_encrypt_block(k, input)
 }
 
@@ -222,14 +222,14 @@ fn aes128_counter_mode(key: Key, nonce: Nonce, counter: U32, msg: Bytes) -> Byte
     for i in 0..n_blocks {
         let keyblock = aes128_ctr_keyblock(key, nonce, ctr);
         let k = i * BLOCKSIZE;
-        blocks_out.update(k, &xor_block(Block::from_sub_pad(msg.clone(),k..k + BLOCKSIZE), keyblock));
+        blocks_out = blocks_out.update(k, xor_block(Block::from_sub_pad(msg.clone(),k..k + BLOCKSIZE), keyblock));
         ctr += U32(1);
     }
     let keyblock = aes128_ctr_keyblock(key, nonce, ctr);
     let k = n_blocks * BLOCKSIZE;
     let mut last_block = Block::new();
-    last_block.update_sub(0, &msg, k, rem);
-    blocks_out.update_sub(k, &xor_block(last_block, keyblock), 0, rem);
+    last_block = last_block.update_sub(0, msg, k, rem);
+    blocks_out = blocks_out.update_sub(k, xor_block(last_block, keyblock), 0, rem);
     blocks_out
 }
 

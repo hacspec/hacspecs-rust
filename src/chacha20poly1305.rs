@@ -21,10 +21,10 @@ fn pad_aad_msg(aad: Bytes, msg: Bytes) -> Bytes {
         16 * ((lmsg >> 4) + 1)
     };
     let mut padded_msg = Bytes::new_len(pad_aad + pad_msg + 16);
-    padded_msg.update(0, &aad);
-    padded_msg.update(pad_aad, &msg);
-    padded_msg.update(pad_aad + pad_msg, &u64_to_le_bytes(U64(laad as u64)));
-    padded_msg.update(pad_aad + pad_msg + 8, &u64_to_le_bytes(U64(lmsg as u64)));
+    padded_msg = padded_msg.update(0, aad);
+    padded_msg = padded_msg.update(pad_aad, msg);
+    padded_msg = padded_msg.update(pad_aad + pad_msg, u64_to_le_bytes(U64(laad as u64)));
+    padded_msg = padded_msg.update(pad_aad + pad_msg + 8, u64_to_le_bytes(U64(lmsg as u64)));
     padded_msg
 }
 
