@@ -4,7 +4,7 @@ hacspec_imports!();
 
 array!(State, 8, U64, u64);
 array!(DoubleState, 16, U64, u64);
-public_array!(Counter, 2,  u64);
+public_array!(Counter, 2, u64);
 bytes!(Buffer, 128);
 bytes!(Digest, 64);
 public_array!(Sigma, 16 * 12, usize);
@@ -19,16 +19,21 @@ static SIGMA: Sigma = Sigma([
     9, 10, 11, 12, 13, 14, 15, 14, 10, 4, 8, 9, 15, 13, 6, 1, 12, 0, 2, 11, 7, 5, 3,
 ]);
 
-static IV: State = State([
-    U64(0x6a09_e667_f3bc_c908u64),
-    U64(0xbb67_ae85_84ca_a73bu64),
-    U64(0x3c6e_f372_fe94_f82bu64),
-    U64(0xa54f_f53a_5f1d_36f1u64),
-    U64(0x510e_527f_ade6_82d1u64),
-    U64(0x9b05_688c_2b3e_6c1fu64),
-    U64(0x1f83_d9ab_fb41_bd6bu64),
-    U64(0x5be0_cd19_137e_2179u64),
-]);
+secret_constant_array!(
+    IV,
+    State,
+    U64,
+    [
+        0x6a09_e667_f3bc_c908u64,
+        0xbb67_ae85_84ca_a73bu64,
+        0x3c6e_f372_fe94_f82bu64,
+        0xa54f_f53a_5f1d_36f1u64,
+        0x510e_527f_ade6_82d1u64,
+        0x9b05_688c_2b3e_6c1fu64,
+        0x1f83_d9ab_fb41_bd6bu64,
+        0x5be0_cd19_137e_2179u64
+    ]
+);
 
 fn mix(v: DoubleState, a: usize, b: usize, c: usize, d: usize, x: U64, y: U64) -> DoubleState {
     let mut result = v;
@@ -79,14 +84,8 @@ fn compress(h: State, m: Buffer, t: Counter, last_block: bool) -> State {
     let m = make_u64array(m);
 
     // Prepare.
-    v[0..8].clone_from_slice(&h[..]);
-    v[8..16].clone_from_slice(&IV[..]);
-    // TODO: This is equivalent to the following but the idiomatic way of doing it.
-    //       Do we want to allow both?
-    // for i in 0..8 {
-    //     v[i] = h[i];
-    //     v[i + 8] = IV[i];
-    // }
+    v.update_sub(0, &h, 0, 8);
+    v.update_sub(8, &IV, 0, 8);
     let foo0: u64 = t[0];
     let foo1: u64 = t[1];
     v[12] ^= U64::classify(foo0);

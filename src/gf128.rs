@@ -60,7 +60,7 @@ fn poly(msg: Bytes, r: Element) -> Element {
     let mut acc = 0;
     for i in 0..n_blocks {
         let k = i * BLOCKSIZE;
-        acc = update(r, msg.get(k..k + BLOCKSIZE), acc);
+        acc = update(r, Block::from_sub_pad(msg.clone(), k..k + BLOCKSIZE), acc);
     }
     if rem != 0 {
         let k = n_blocks * BLOCKSIZE;
