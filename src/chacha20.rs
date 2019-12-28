@@ -36,22 +36,22 @@ fn line(a: usize, b: usize, d: usize, s: usize, m: State) -> State {
     state
 }
 
-pub fn quarter_round(a: usize, b: usize, c: usize, d: usize, m: State) -> State {
-    let state = line(a, b, d, 16, m);
-    let state = line(c, d, b, 12, state);
-    let state = line(a, b, d, 8, state);
+pub fn quarter_round(a: usize, b: usize, c: usize, d: usize, mut state: State) -> State {
+    state = line(a, b, d, 16, state);
+    state = line(c, d, b, 12, state);
+    state = line(a, b, d, 8, state);
     line(c, d, b, 7, state)
 }
 
-fn double_round(m: State) -> State {
-    let state = quarter_round(0, 4, 8, 12, m);
-    let state = quarter_round(1, 5, 9, 13, state);
-    let state = quarter_round(2, 6, 10, 14, state);
-    let state = quarter_round(3, 7, 11, 15, state);
+fn double_round(mut state: State) -> State {
+    state = quarter_round(0, 4, 8, 12, state);
+    state = quarter_round(1, 5, 9, 13, state);
+    state = quarter_round(2, 6, 10, 14, state);
+    state = quarter_round(3, 7, 11, 15, state);
 
-    let state = quarter_round(0, 5, 10, 15, state);
-    let state = quarter_round(1, 6, 11, 12, state);
-    let state = quarter_round(2, 7, 8, 13, state);
+    state = quarter_round(0, 5, 10, 15, state);
+    state = quarter_round(1, 6, 11, 12, state);
+    state = quarter_round(2, 7, 8, 13, state);
     quarter_round(3, 4, 9, 14, state)
 }
 

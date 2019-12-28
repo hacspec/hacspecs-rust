@@ -89,40 +89,38 @@ fn mix_column(c: usize, state: Block) -> Block {
     st
 }
 
-fn mix_columns(state: Block) -> Block {
-    let state = mix_column(0, state);
-    let state = mix_column(1, state);
-    let state = mix_column(2, state);
+fn mix_columns(mut state: Block) -> Block {
+    state = mix_column(0, state);
+    state = mix_column(1, state);
+    state = mix_column(2, state);
     mix_column(3, state)
 }
 
-fn add_round_key(state: Block, key: Key) -> Block {
-    let mut out = state;
+fn add_round_key(mut state: Block, key: Key) -> Block {
     for i in 0..16 {
-        out[i] ^= key[i];
+    state[i] ^= key[i];
     }
-    out
+    state
 }
 
-fn aes_enc(state: Block, round_key: Key) -> Block {
-    let state = sub_bytes(state);
-    let state = shift_rows(state);
-    let state = mix_columns(state);
+fn aes_enc(mut state: Block, round_key: Key) -> Block {
+    state = sub_bytes(state);
+    state = shift_rows(state);
+    state = mix_columns(state);
     add_round_key(state, round_key)
 }
 
-fn aes_enc_last(state: Block, round_key: Key) -> Block {
-    let state = sub_bytes(state);
-    let state = shift_rows(state);
+fn aes_enc_last(mut state: Block, round_key: Key) -> Block {
+    state = sub_bytes(state);
+    state = shift_rows(state);
     add_round_key(state, round_key)
 }
 
-fn rounds(state: Block, key: Bytes144) -> Block {
-    let mut out = state;
+fn rounds(mut state: Block, key: Bytes144) -> Block {
     for i in 0..9 {
-        out = aes_enc(out, Key::from_sub(key, 16 * i..16 * i + 16));
+        state = aes_enc(state, Key::from_sub(key, 16 * i..16 * i + 16));
     }
-    out
+    state
 }
 
 fn block_cipher(input: Block, key: Bytes176) -> Block {
@@ -148,8 +146,8 @@ fn sub_word(w: Word) -> Word {
 }
 
 fn aes_keygen_assist(w: Word, rcon: U8) -> Word {
-    let k = rotate_word(w);
-    let mut k = sub_word(k);
+    let mut k = rotate_word(w);
+    k = sub_word(k);
     k[0] ^= rcon;
     k
 }
@@ -195,12 +193,11 @@ pub(crate) fn aes128_ctr_keyblock(k: Key, n: Nonce, c: U32) -> Block {
     aes128_encrypt_block(k, input)
 }
 
-pub(crate) fn xor_block(block: Block, keyblock: Block) -> Block {
-    let mut out = block;
+pub(crate) fn xor_block(mut block: Block, keyblock: Block) -> Block {
     for i in 0..BLOCKSIZE {
-        out[i] ^= keyblock[i];
+        block[i] ^= keyblock[i];
     }
-    out
+    block
 }
 
 fn aes128_counter_mode(key: Key, nonce: Nonce, counter: U32, msg: Bytes) -> Bytes {
