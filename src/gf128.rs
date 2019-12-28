@@ -12,21 +12,21 @@ bytes!(Key, BLOCKSIZE);
 bytes!(Tag, BLOCKSIZE);
 
 // TODO: Use a 128-bit uint_n instead?
-type Element = u128;
-const IRRED: Element = 0xE1000000000000000000000000000000;
+type Element = U128;
+const IRRED: Element = U128(0xE1000000000000000000000000000000);
 
 fn fadd(x: Element, y: Element) -> Element {
     x ^ y
 }
 
 fn fmul(x: Element, y: Element) -> Element {
-    let mut res: Element = 0;
+    let mut res: Element = U128(0);
     let mut sh = x;
     for i in 0..128 {
-        if y & (1 << (127 - i)) != 0 {
+        if y & (U128(1) << (127 - i)) != U128(0) {
             res ^= sh;
         }
-        if sh & 1 != 0 {
+        if sh & U128(1) != U128(0) {
             sh = (sh >> 1) ^ IRRED;
         } else {
             sh = sh >> 1;
@@ -39,13 +39,11 @@ fn fmul(x: Element, y: Element) -> Element {
 
 // TODO: block is actually subblock
 fn encode(block: Block) -> Element {
-    let mut i : [u8; 16] = [0; 16];
-    i.copy_from_slice(&block.iter().map(|x| U8::declassify(*x)).collect::<Vec<_>>());
-    Element::from_be_bytes(i)
+    u128_from_be_bytes(U128Word::copy(block))
 }
 
 fn decode(e: Element) -> Block {
-    Block::from(U128::to_bytes_be(&[U128(e)]))
+    Block::copy(u128_to_be_bytes(e))
 }
 
 // TODO: block is actually subblock
@@ -57,7 +55,7 @@ fn poly(msg: Bytes, r: Element) -> Element {
     let l = msg.len();
     let n_blocks: usize = l / BLOCKSIZE;
     let rem = l % BLOCKSIZE;
-    let mut acc = 0;
+    let mut acc = U128(0);
     for i in 0..n_blocks {
         let k = i * BLOCKSIZE;
         acc = update(r, Block::from_sub_pad(msg.clone(), k..k + BLOCKSIZE), acc);

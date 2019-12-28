@@ -2,19 +2,19 @@
 use hacspec::*;
 hacspec_imports!();
 
-define_abstract_integer_checked!(FieldCanvas, 512);
+unsigned_integer!(FieldCanvas, 512);
 
 // Define field mod 2^255-19
-define_refined_modular_integer!(
+field_integer!(
     FieldElement,
     FieldCanvas,
     FieldCanvas::from_hex("7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffed")
 );
 
-define_abstract_integer_checked!(ScalarCanvas, 256);
+unsigned_integer!(ScalarCanvas, 256);
 
 // Define 255-bit scalars
-define_refined_modular_integer!(Scalar, ScalarCanvas, ScalarCanvas::pow2(255));
+field_integer!(Scalar, ScalarCanvas, ScalarCanvas::pow2(255));
 
 type Point = (FieldElement, FieldElement);
 bytes!(SerializedPoint, 32);
@@ -31,23 +31,13 @@ fn mask_scalar(s: SerializedScalar) -> SerializedScalar {
 // TODO: drop raw where possible
 fn decode_scalar(s: SerializedScalar) -> Scalar {
     let k = mask_scalar(s);
-    Scalar::from_bytes_le(
-        k.iter()
-            .map(|x| U8::declassify(*x))
-            .collect::<Vec<_>>()
-            .as_slice(),
-    )
+    Scalar::from_byte_seq_le(k)
 }
 
 fn decode_point(u: SerializedPoint) -> Point {
-    let u_ = Scalar::from_bytes_le(
-        u.iter()
-            .map(|x| U8::declassify(*x))
-            .collect::<Vec<_>>()
-            .as_slice(),
-    );
+    let u_ = Scalar::from_byte_seq_le(u);
     (
-        FieldElement::from_bytes_le(&u_.to_bytes_le()),
+        FieldElement::from_byte_seq_le(u_.to_byte_seq_le()),
         FieldElement::from_literal(1),
     )
 }
@@ -55,12 +45,7 @@ fn decode_point(u: SerializedPoint) -> Point {
 fn encode_point(p: Point) -> SerializedPoint {
     let (x, y) = p;
     let b = x * y.inv();
-    SerializedPoint::from(
-        (&b.to_bytes_le()[..])
-            .iter()
-            .map(|x| U8::classify(*x))
-            .collect::<Vec<U8>>(),
-    )
+    SerializedPoint::copy_pad(b.to_byte_seq_le())
 }
 
 fn point_add_and_double(q: Point, nq: Point, nqp1: Point) -> (Point, Point) {

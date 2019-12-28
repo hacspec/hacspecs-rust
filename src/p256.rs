@@ -2,16 +2,16 @@
 use hacspec::*;
 hacspec_imports!();
 
-define_abstract_integer_checked!(FieldCanvas, 512);
+unsigned_integer!(FieldCanvas, 512);
 
 // Define field P256 (prime: 2**256 - 2**224 + 2**192 + 2**96 - 1)
-define_refined_modular_integer!(
+field_integer!(
     FieldElement,
     FieldCanvas,
     FieldCanvas::from_hex("ffffffff00000001000000000000000000000000ffffffffffffffffffffffff")
 );
 
-define_abstract_integer_checked!(Scalar, 256);
+unsigned_integer!(Scalar, 256);
 
 // TODO: these two aren't cool
 type Jacobian = (FieldElement, FieldElement, FieldElement);

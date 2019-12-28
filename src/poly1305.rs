@@ -15,9 +15,9 @@ bytes!(Block, BLOCKSIZE);
 // These are actual types; fixed-length arrays.
 bytes!(Tag, BLOCKSIZE);
 
-define_abstract_integer_checked!(FieldCanvas, 272);
+unsigned_integer!(FieldCanvas, 272);
 
-define_refined_modular_integer!(
+field_integer!(
     FieldElement,
     FieldCanvas,
     FieldCanvas::from_hex("03fffffffffffffffffffffffffffffffb")
@@ -33,14 +33,14 @@ fn encode_r(r: Block) -> FieldElement {
     r_128 = r_128.update_sub(0, r, 0, BLOCKSIZE);
     let r_uint = u128_from_le_bytes(r_128);
     let r_uint = r_uint & U128(0x0fff_fffc_0fff_fffc_0fff_fffc_0fff_ffff);
-    FieldElement::from_literal(U128::declassify(r_uint))
+    FieldElement::from_secret_literal(r_uint)
 }
 
 fn encode(block: Bytes) -> FieldElement {
     let mut block_as_u128 = U128Word::new();
     let block_len = block.len();
     block_as_u128 = block_as_u128.update_sub(0, block, 0, min(16, block_len));
-    let w_elem = FieldElement::from_literal(U128::declassify(u128_from_le_bytes(block_as_u128)));
+    let w_elem = FieldElement::from_secret_literal(u128_from_le_bytes(block_as_u128));
     let l_elem = FieldCanvas::pow2(8 * block_len).into();
     w_elem + l_elem
 }
@@ -58,13 +58,16 @@ fn poly_inner(m: Bytes, r: FieldElement) -> FieldElement {
 }
 
 pub fn poly(m: Bytes, key: Key) -> Tag {
-    let s_elem = FieldElement::from_literal(U128::declassify(u128_from_le_bytes(U128Word::from_sub(key, BLOCKSIZE..2 * BLOCKSIZE))));
+    let s_elem = FieldElement::from_secret_literal(u128_from_le_bytes(U128Word::from_sub(
+        key,
+        BLOCKSIZE..2 * BLOCKSIZE,
+    )));
     let r_elem = encode_r(Block::from_sub(key, 0..BLOCKSIZE));
     let a = poly_inner(m, r_elem);
     let n = a + s_elem;
     // Note that n might be less than 16 byte -> zero-pad; but might also be
     // larger than Tag::capacity().
-    let n_v = n.to_bytes_le().iter().map(|x| U8::classify(*x)).collect::<Vec<_>>();
+    let n_v = n.to_byte_seq_le();
     let mut tag = Tag::new();
     for i in 0..min(tag.len(), n_v.len()) {
         tag[i] = n_v[i];
