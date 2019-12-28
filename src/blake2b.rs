@@ -19,9 +19,7 @@ static SIGMA: Sigma = Sigma([
     9, 10, 11, 12, 13, 14, 15, 14, 10, 4, 8, 9, 15, 13, 6, 1, 12, 0, 2, 11, 7, 5, 3,
 ]);
 
-secret_constant_array!(
-    IV,
-    State,
+const IV: State = State(secret_array!(
     U64,
     [
         0x6a09_e667_f3bc_c908u64,
@@ -33,7 +31,7 @@ secret_constant_array!(
         0x1f83_d9ab_fb41_bd6bu64,
         0x5be0_cd19_137e_2179u64
     ]
-);
+));
 
 fn mix(v: DoubleState, a: usize, b: usize, c: usize, d: usize, x: U64, y: U64) -> DoubleState {
     let mut result = v;

@@ -14,11 +14,7 @@ define_refined_modular_integer!(
 define_abstract_integer_checked!(ScalarCanvas, 256);
 
 // Define 255-bit scalars
-define_refined_modular_integer!(
-    Scalar,
-    ScalarCanvas,
-    ScalarCanvas::pow2(255)
-);
+define_refined_modular_integer!(Scalar, ScalarCanvas, ScalarCanvas::pow2(255));
 
 type Point = (FieldElement, FieldElement);
 bytes!(SerializedPoint, 32);
@@ -35,14 +31,21 @@ fn mask_scalar(s: SerializedScalar) -> SerializedScalar {
 // TODO: drop raw where possible
 fn decode_scalar(s: SerializedScalar) -> Scalar {
     let k = mask_scalar(s);
-    Scalar::from_bytes_le(k.iter().map(|x| U8::declassify(*x)).collect::<Vec<_>>().as_slice())
+    Scalar::from_bytes_le(
+        k.iter()
+            .map(|x| U8::declassify(*x))
+            .collect::<Vec<_>>()
+            .as_slice(),
+    )
 }
 
 fn decode_point(u: SerializedPoint) -> Point {
-    println!("Point: {:?}", u);
-    println!("Argument: {:?}", u.iter().map(|x| U8::declassify(*x)).collect::<Vec<_>>().as_slice());
-    let u_ = Scalar::from_bytes_le(u.iter().map(|x| U8::declassify(*x)).collect::<Vec<_>>().as_slice());
-    println!("Point after u_: {:?}", u_);
+    let u_ = Scalar::from_bytes_le(
+        u.iter()
+            .map(|x| U8::declassify(*x))
+            .collect::<Vec<_>>()
+            .as_slice(),
+    );
     (
         FieldElement::from_bytes_le(&u_.to_bytes_le()),
         FieldElement::from_literal(1),
@@ -83,7 +86,10 @@ fn point_add_and_double(q: Point, nq: Point, nqp1: Point) -> (Point, Point) {
 }
 
 fn montgomery_ladder(k: Scalar, init: Point) -> Point {
-    let mut acc: (Point, Point) = ((FieldElement::from_literal(1), FieldElement::from_literal(0)), init);
+    let mut acc: (Point, Point) = (
+        (FieldElement::from_literal(1), FieldElement::from_literal(0)),
+        init,
+    );
     for i in 0..256 {
         if k.bit(255 - i) {
             // TODO: this is ugly
@@ -107,23 +113,21 @@ pub fn scalarmult(s: SerializedScalar, p: SerializedPoint) -> SerializedPoint {
 
 #[test]
 fn test_encode_decode_scalar() {
-    let s = SerializedScalar([
-        U8(0xa5), U8(0x46), U8(0xe3), U8(0x6b), U8(0xf0), U8(0x52), U8(0x7c), U8(0x9d),
-        U8(0x3b), U8(0x16), U8(0x15), U8(0x4b), U8(0x82), U8(0x46), U8(0x5e), U8(0xdd),
-        U8(0x62), U8(0x14), U8(0x4c), U8(0x0a), U8(0xc1), U8(0xfc), U8(0x5a), U8(0x18),
-        U8(0x50), U8(0x6a), U8(0x22), U8(0x44), U8(0xba), U8(0x44), U8(0x9a), U8(0xc4),
-    ]);
+    let s = SerializedScalar(secret_bytes!([
+        0xa5, 0x46, 0xe3, 0x6b, 0xf0, 0x52, 0x7c, 0x9d, 0x3b, 0x16, 0x15, 0x4b, 0x82, 0x46, 0x5e,
+        0xdd, 0x62, 0x14, 0x4c, 0x0a, 0xc1, 0xfc, 0x5a, 0x18, 0x50, 0x6a, 0x22, 0x44, 0xba, 0x44,
+        0x9a, 0xc4
+    ]));
     let s_expected =
         Scalar::from_hex("449a44ba44226a50185afcc10a4c1462dd5e46824b15163b9d7c52f06be346a0");
     let s_ = decode_scalar(s);
     assert_eq!(s_expected, s_);
 
-    let u = SerializedPoint([
-        U8(0xe6), U8(0xdb), U8(0x68), U8(0x67), U8(0x58), U8(0x30), U8(0x30), U8(0xdb),
-        U8(0x35), U8(0x94), U8(0xc1), U8(0xa4), U8(0x24), U8(0xb1), U8(0x5f), U8(0x7c),
-        U8(0x72), U8(0x66), U8(0x24), U8(0xec), U8(0x26), U8(0xb3), U8(0x35), U8(0x3b),
-        U8(0x10), U8(0xa9), U8(0x03), U8(0xa6), U8(0xd0), U8(0xab), U8(0x1c), U8(0x4c),
-    ]);
+    let u = SerializedPoint(secret_bytes!([
+        0xe6, 0xdb, 0x68, 0x67, 0x58, 0x30, 0x30, 0xdb, 0x35, 0x94, 0xc1, 0xa4, 0x24, 0xb1, 0x5f,
+        0x7c, 0x72, 0x66, 0x24, 0xec, 0x26, 0xb3, 0x35, 0x3b, 0x10, 0xa9, 0x03, 0xa6, 0xd0, 0xab,
+        0x1c, 0x4c
+    ]));
     let u_expected = (
         FieldElement::from_hex("4c1cabd0a603a9103b35b326ec2466727c5fb124a4c19435db3030586768dbe6"),
         FieldElement::from_literal(1),
