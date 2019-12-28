@@ -30,7 +30,7 @@ fn pad_aad_msg(aad: Bytes, msg: Bytes) -> Bytes {
 
 pub fn encrypt(key: Key, iv: IV, aad: Bytes, msg: Bytes) -> Result<(Bytes, Tag), String> {
     let key_block = block(key, U32(0), iv);
-    let mac_key = Key::from(&key_block[0..32]);
+    let mac_key = Key::from_sub(key_block, 0..32);
     let cipher_text = match chacha(key, iv, msg) {
         Ok(c) => c,
         Err(r) => {

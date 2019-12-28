@@ -17,8 +17,8 @@ fn test_single_block() {
     let m = Bytes::from_array(&[U8(0x61), U8(0x62), U8(0x63)]);
     let h = blake2b(m);
     assert_eq!(
-        &EXPECTED_ABC[..].iter().map(|x| *x).collect::<Vec<_>>(),
-        &h[..].iter().map(|x| U8::declassify(*x)).collect::<Vec<_>>()
+        EXPECTED_ABC.iter().map(|x| *x).collect::<Vec<_>>(),
+        h.iter().map(|x| U8::declassify(*x)).collect::<Vec<_>>()
     );
 }
 
@@ -27,8 +27,8 @@ fn test_single_block_string() {
     let m = String::from("abc");
     let h = blake2b(Bytes::from_array(&m.into_bytes().iter().map(|x| U8::classify(*x)).collect::<Vec<_>>()));
     assert_eq!(
-        &EXPECTED_ABC[..].iter().map(|x| *x).collect::<Vec<_>>(),
-        &h[..].iter().map(|x| U8::declassify(*x)).collect::<Vec<_>>()
+        EXPECTED_ABC.iter().map(|x| *x).collect::<Vec<_>>(),
+        h.iter().map(|x| U8::declassify(*x)).collect::<Vec<_>>()
     );
 }
 
@@ -45,8 +45,8 @@ fn test_multi_block_string() {
         0x1c, 0x87, 0x46, 0x96,
     ];
     assert_eq!(
-        &expected[..].iter().map(|x| *x).collect::<Vec<_>>(),
-        &h[..].iter().map(|x| U8::declassify(*x)).collect::<Vec<_>>()
+        expected.iter().map(|x| *x).collect::<Vec<_>>(),
+        h.iter().map(|x| U8::declassify(*x)).collect::<Vec<_>>()
     );
 }
 
@@ -63,7 +63,7 @@ fn test_multi_block_string_longer() {
         0x0d, 0x24, 0x43, 0xf0,
     ];
     assert_eq!(
-        &expected[..].iter().map(|x| *x).collect::<Vec<_>>(),
-        &h[..].iter().map(|x| U8::declassify(*x)).collect::<Vec<_>>()
+        expected.iter().map(|x| *x).collect::<Vec<_>>(),
+        h.iter().map(|x| U8::declassify(*x)).collect::<Vec<_>>()
     );
 }

@@ -64,7 +64,12 @@ pub fn poly(m: Bytes, key: Key) -> Tag {
     let n = a + s_elem;
     // Note that n might be less than 16 byte -> zero-pad; but might also be
     // larger than Tag::capacity().
-    Tag::from_vec_lazy(n.to_bytes_le().iter().map(|x| U8::classify(*x)).collect::<Vec<_>>())
+    let n_v = n.to_bytes_le().iter().map(|x| U8::classify(*x)).collect::<Vec<_>>();
+    let mut tag = Tag::new();
+    for i in 0..min(tag.len(), n_v.len()) {
+        tag[i] = n_v[i];
+    }
+    tag
 }
 
 pub fn poly_mac(m: Bytes, key: Key, iv: IV) -> Tag {

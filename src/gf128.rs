@@ -73,7 +73,7 @@ fn poly(msg: Bytes, r: Element) -> Element {
 
 pub fn gmac(text: Bytes, k: Key) -> Tag {
     let s = Block::new();
-    let r = encode(k[..].into());
+    let r = encode(Block::copy(k));
     let a = poly(text, r);
     Tag(decode(fadd(a, encode(s))).into())
 }

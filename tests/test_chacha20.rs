@@ -21,8 +21,8 @@ fn test_quarter_round() {
     ]);
     state = quarter_round(2, 7, 8, 13, state);
     assert_eq!(
-        state[..].iter().map(|x| U32::declassify(*x)).collect::<Vec<_>>(),
-        expected_state[..].iter().map(|x| U32::declassify(*x)).collect::<Vec<_>>()
+        state.iter().map(|x| U32::declassify(*x)).collect::<Vec<_>>(),
+        expected_state.iter().map(|x| U32::declassify(*x)).collect::<Vec<_>>()
     );
 }
 
@@ -47,8 +47,8 @@ fn test_block() {
         U32(0x00000001), U32(0x09000000), U32(0x4a000000), U32(0x00000000),
     ]);
     assert_eq!(
-        state[..].iter().map(|x| U32::declassify(*x)).collect::<Vec<_>>(),
-        expected_state[..].iter().map(|x| U32::declassify(*x)).collect::<Vec<_>>()
+        state.iter().map(|x| U32::declassify(*x)).collect::<Vec<_>>(),
+        expected_state.iter().map(|x| U32::declassify(*x)).collect::<Vec<_>>()
     );
 
     let state = block_inner(key, ctr, iv);
@@ -59,8 +59,8 @@ fn test_block() {
         U32(0xd19c12b5), U32(0xb94e16de), U32(0xe883d0cb), U32(0x4e3c50a2),
     ]);
     assert_eq!(
-        state[..].iter().map(|x| U32::declassify(*x)).collect::<Vec<_>>(),
-        expected_state[..].iter().map(|x| U32::declassify(*x)).collect::<Vec<_>>()
+        state.iter().map(|x| U32::declassify(*x)).collect::<Vec<_>>(),
+        expected_state.iter().map(|x| U32::declassify(*x)).collect::<Vec<_>>()
     );
 
     let expected_serialised = [
@@ -76,8 +76,8 @@ fn test_block() {
     let serialised = state_to_bytes(state);
     println!("{:?}", serialised.len());
     assert_eq!(
-        serialised[..].iter().map(|x| U8::declassify(*x)).collect::<Vec<_>>(),
-        expected_serialised[..].iter().map(|x| U8::declassify(*x)).collect::<Vec<_>>()
+        serialised.iter().map(|x| U8::declassify(*x)).collect::<Vec<_>>(),
+        expected_serialised.iter().map(|x| U8::declassify(*x)).collect::<Vec<_>>()
     );
 }
 

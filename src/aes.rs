@@ -278,14 +278,8 @@ fn test_kat_block1() {
 
     let c = aes128_encrypt_block(key, msg);
     assert_eq!(
-        (&ctxt[..])
-            .iter()
-            .map(|x| U8::declassify(*x))
-            .collect::<Vec<_>>(),
-        (&c[..])
-            .iter()
-            .map(|x| U8::declassify(*x))
-            .collect::<Vec<_>>()
+        ctxt.iter().map(|x| U8::declassify(*x)).collect::<Vec<_>>(),
+        c.iter().map(|x| U8::declassify(*x)).collect::<Vec<_>>()
     );
 }
 
