@@ -23,10 +23,10 @@ fn fmul(x: Element, y: Element) -> Element {
     let mut res: Element = U128(0);
     let mut sh = x;
     for i in 0..128 {
-        if y & (U128(1) << (127 - i)) != U128(0) {
+        if (y & (U128(1) << (127 - i))).declassify() != U128(0).declassify() {
             res ^= sh;
         }
-        if sh & U128(1) != U128(0) {
+        if (sh & U128(1)).declassify() != U128(0).declassify() {
             sh = (sh >> 1) ^ IRRED;
         } else {
             sh = sh >> 1;
