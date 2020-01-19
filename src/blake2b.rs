@@ -134,7 +134,7 @@ fn get_byte(x: U64, i: usize) -> U8 {
     }
 }
 
-pub fn blake2b(data: Bytes) -> Digest {
+pub fn blake2b(data: ByteSeq) -> Digest {
     let mut h = IV;
     // This only supports the 512 version without key.
     h[0] = h[0] ^ U64(0x0101_0000) ^ U64(64);

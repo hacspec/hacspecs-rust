@@ -7,7 +7,7 @@ use crate::aes;
 use crate::aes::{aes128_ctr_keyblock, aes128_encrypt, aes128_decrypt, Block};
 use crate::gf128::{gmac, Tag, Key};
 
-fn pad_aad_msg(aad: Bytes, msg: Bytes) -> Bytes {
+fn pad_aad_msg(aad: ByteSeq, msg: ByteSeq) -> ByteSeq {
     let laad = aad.len();
     let lmsg = msg.len();
     let pad_aad = if laad % 16 == 0 {
@@ -20,7 +20,7 @@ fn pad_aad_msg(aad: Bytes, msg: Bytes) -> Bytes {
     } else {
         lmsg + (16 - (lmsg % 16))
     };
-    let mut padded_msg = Bytes::new_len(pad_aad + pad_msg + 16);
+    let mut padded_msg = ByteSeq::new_len(pad_aad + pad_msg + 16);
     padded_msg = padded_msg.update(0, aad);
     padded_msg = padded_msg.update(pad_aad, msg);
     padded_msg = padded_msg.update(pad_aad + pad_msg, u64_to_be_bytes(U64(laad as u64) * U64(8)));
@@ -29,7 +29,7 @@ fn pad_aad_msg(aad: Bytes, msg: Bytes) -> Bytes {
 }
 
 // FIXME: fix type conversions :(
-pub fn encrypt(key: aes::Key, iv: aes::Nonce, aad: Bytes, msg: Bytes) -> (Bytes, Tag) {
+pub fn encrypt(key: aes::Key, iv: aes::Nonce, aad: ByteSeq, msg: ByteSeq) -> (ByteSeq, Tag) {
     let iv0 = aes::Nonce::new();
 
     let mac_key = aes128_ctr_keyblock(key, iv0, U32(0));
@@ -46,10 +46,10 @@ pub fn encrypt(key: aes::Key, iv: aes::Nonce, aad: Bytes, msg: Bytes) -> (Bytes,
 pub fn decrypt(
     key: aes::Key,
     iv: aes::Nonce,
-    aad: Bytes,
-    cipher_text: Bytes,
+    aad: ByteSeq,
+    cipher_text: ByteSeq,
     tag: Tag,
-) -> Result<Bytes, String> {
+) -> Result<ByteSeq, String> {
     let iv0 = aes::Nonce::new();
 
     let mac_key = aes128_ctr_keyblock(key, iv0, U32(0));

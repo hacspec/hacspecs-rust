@@ -6,8 +6,7 @@ hacspec_imports!();
 use crate::chacha20::*;
 use crate::poly1305::*;
 
-// TODO: can we do without borrow?
-fn pad_aad_msg(aad: Bytes, msg: Bytes) -> Bytes {
+fn pad_aad_msg(aad: ByteSeq, msg: ByteSeq) -> ByteSeq {
     let laad = aad.len();
     let lmsg = msg.len();
     let pad_aad = if laad % 16 == 0 {
@@ -20,7 +19,7 @@ fn pad_aad_msg(aad: Bytes, msg: Bytes) -> Bytes {
     } else {
         16 * ((lmsg >> 4) + 1)
     };
-    let mut padded_msg = Bytes::new_len(pad_aad + pad_msg + 16);
+    let mut padded_msg = ByteSeq::new_len(pad_aad + pad_msg + 16);
     padded_msg = padded_msg.update(0, aad);
     padded_msg = padded_msg.update(pad_aad, msg);
     padded_msg = padded_msg.update(pad_aad + pad_msg, u64_to_le_bytes(U64(laad as u64)));
@@ -28,7 +27,7 @@ fn pad_aad_msg(aad: Bytes, msg: Bytes) -> Bytes {
     padded_msg
 }
 
-pub fn encrypt(key: Key, iv: IV, aad: Bytes, msg: Bytes) -> Result<(Bytes, Tag), String> {
+pub fn encrypt(key: Key, iv: IV, aad: ByteSeq, msg: ByteSeq) -> Result<(ByteSeq, Tag), String> {
     let key_block = block(key, U32(0), iv);
     let mac_key = Key::from_sub(key_block, 0..32);
     let cipher_text = match chacha(key, iv, msg) {
@@ -46,10 +45,10 @@ pub fn encrypt(key: Key, iv: IV, aad: Bytes, msg: Bytes) -> Result<(Bytes, Tag),
 pub fn decrypt(
     key: Key,
     iv: IV,
-    aad: Bytes,
-    cipher_text: Bytes,
+    aad: ByteSeq,
+    cipher_text: ByteSeq,
     tag: Tag,
-) -> Result<Bytes, String> {
+) -> Result<ByteSeq, String> {
     let key_block = block(key, U32(0), iv);
     let mac_key = Key::from_sub(key_block, 0..32);
     let padded_msg = pad_aad_msg(aad, cipher_text.clone());

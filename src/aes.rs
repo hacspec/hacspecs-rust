@@ -203,12 +203,12 @@ pub(crate) fn xor_block(block: Block, keyblock: Block) -> Block {
     out
 }
 
-fn aes128_counter_mode(key: Key, nonce: Nonce, counter: U32, msg: Bytes) -> Bytes {
+fn aes128_counter_mode(key: Key, nonce: Nonce, counter: U32, msg: ByteSeq) -> ByteSeq {
     let l = msg.len();
     let n_blocks: usize = l / BLOCKSIZE;
     let rem = l % BLOCKSIZE;
     let mut ctr = counter;
-    let mut blocks_out = Bytes::new_len(l);
+    let mut blocks_out = ByteSeq::new_len(l);
     for i in 0..n_blocks {
         let keyblock = aes128_ctr_keyblock(key, nonce, ctr);
         let k = i * BLOCKSIZE;
@@ -226,11 +226,11 @@ fn aes128_counter_mode(key: Key, nonce: Nonce, counter: U32, msg: Bytes) -> Byte
     blocks_out
 }
 
-pub fn aes128_encrypt(key: Key, nonce: Nonce, counter: U32, msg: Bytes) -> Bytes {
+pub fn aes128_encrypt(key: Key, nonce: Nonce, counter: U32, msg: ByteSeq) -> ByteSeq {
     aes128_counter_mode(key, nonce, counter, msg)
 }
 
-pub fn aes128_decrypt(key: Key, nonce: Nonce, counter: U32, ctxt: Bytes) -> Bytes {
+pub fn aes128_decrypt(key: Key, nonce: Nonce, counter: U32, ctxt: ByteSeq) -> ByteSeq {
     aes128_counter_mode(key, nonce, counter, ctxt)
 }
 
@@ -277,7 +277,7 @@ fn test_kat_block2() {
         0xae, 0x68, 0x52, 0xf8, 0x12, 0x10, 0x67, 0xcc, 0x4b, 0xf7, 0xa5, 0x76, 0x55, 0x77, 0xf3,
         0x9e
     ]));
-    let ctxt = Bytes::from_array(&secret_bytes!([
+    let ctxt = ByteSeq::from_array(&secret_bytes!([
         0x61, 0x5f, 0x09, 0xfb, 0x35, 0x3f, 0x61, 0x3b, 0xa2, 0x8f, 0xf3, 0xa3, 0x0c, 0x64, 0x75,
         0x2d
     ]));

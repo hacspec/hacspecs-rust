@@ -55,9 +55,9 @@ fn kat_test() {
         let k = aes::Key::from(kat.key);
         let nonce = aes::Nonce::from(kat.nonce);
         let exp_mac = gf128::Tag::from(kat.exp_mac);
-        let msg = Bytes::from(kat.msg);
-        let aad = Bytes::from(kat.aad);
-        let exp_cipher = Bytes::from(kat.exp_cipher);
+        let msg = ByteSeq::from(kat.msg);
+        let aad = ByteSeq::from(kat.aad);
+        let exp_cipher = ByteSeq::from(kat.exp_cipher);
 
         let (cipher, mac) = encrypt(k, nonce, aad.clone(), msg.clone());
         assert_eq!(

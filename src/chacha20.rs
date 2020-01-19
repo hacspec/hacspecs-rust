@@ -93,12 +93,12 @@ pub fn block(key: Key, ctr: U32, iv: IV) -> StateBytes {
     state_to_bytes(state)
 }
 
-pub fn chacha(key: Key, iv: IV, m: Bytes) -> Result<Bytes, String> {
+pub fn chacha(key: Key, iv: IV, m: ByteSeq) -> Result<ByteSeq, String> {
     let l = m.len();
     let n_blocks: usize = l / 64;
     let rem = l % 64;
     let mut ctr = U32(1);
-    let mut blocks_out = Bytes::new_len(l);
+    let mut blocks_out = ByteSeq::new_len(l);
     for i in 0..n_blocks {
         let key_block = block(key, ctr, iv);
         for j in 0..64 {

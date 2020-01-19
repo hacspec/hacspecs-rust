@@ -51,7 +51,7 @@ fn update(r: Element, block: Block, acc: Element) -> Element {
     fmul(fadd(encode(block), acc), r)
 }
 
-fn poly(msg: Bytes, r: Element) -> Element {
+fn poly(msg: ByteSeq, r: Element) -> Element {
     let l = msg.len();
     let n_blocks: usize = l / BLOCKSIZE;
     let rem = l % BLOCKSIZE;
@@ -69,7 +69,7 @@ fn poly(msg: Bytes, r: Element) -> Element {
     acc
 }
 
-pub fn gmac(text: Bytes, k: Key) -> Tag {
+pub fn gmac(text: ByteSeq, k: Key) -> Tag {
     let s = Block::new();
     let r = encode(Block::copy(k));
     let a = poly(text, r);

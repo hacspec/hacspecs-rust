@@ -36,7 +36,7 @@ fn encode_r(r: Block) -> FieldElement {
     FieldElement::from_secret_literal(r_uint)
 }
 
-fn encode(block: Bytes) -> FieldElement {
+fn encode(block: ByteSeq) -> FieldElement {
     let mut block_as_u128 = U128Word::new();
     let block_len = block.len();
     block_as_u128 = block_as_u128.update_sub(0, block, 0, min(16, block_len));
@@ -45,7 +45,7 @@ fn encode(block: Bytes) -> FieldElement {
     w_elem + l_elem
 }
 
-fn poly_inner(m: Bytes, r: FieldElement) -> FieldElement {
+fn poly_inner(m: ByteSeq, r: FieldElement) -> FieldElement {
     let mut acc = FieldElement::from_literal(0);
     let m_len = m.len();
     for i in (0..m_len).step_by(BLOCKSIZE) {
@@ -57,7 +57,7 @@ fn poly_inner(m: Bytes, r: FieldElement) -> FieldElement {
     acc
 }
 
-pub fn poly(m: Bytes, key: Key) -> Tag {
+pub fn poly(m: ByteSeq, key: Key) -> Tag {
     let s_elem = FieldElement::from_secret_literal(u128_from_le_bytes(U128Word::from_sub(
         key,
         BLOCKSIZE..2 * BLOCKSIZE,
@@ -75,7 +75,7 @@ pub fn poly(m: Bytes, key: Key) -> Tag {
     tag
 }
 
-pub fn poly_mac(m: Bytes, key: Key, iv: IV) -> Tag {
+pub fn poly_mac(m: ByteSeq, key: Key, iv: IV) -> Tag {
     let mac_key = key_gen(key, iv);
     poly(m, mac_key)
 }
