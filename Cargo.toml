@@ -13,5 +13,5 @@ contracts = "0.3"
 paste = "0.1"
 
 secret_integers = "0.1.5"
-abstract_integers = { git = "https://github.com/denismerigoux/rust-abstract-integers" }
+abstract_integers = "0.1.3"
 # abstract_integers = { path = "../rust-abstract-integers" }

@@ -2,7 +2,7 @@
 use hacspec::*;
 hacspec_imports!();
 
-unsigned_integer!(FieldCanvas, 512);
+unsigned_integer!(FieldCanvas, 256);
 
 // Define field P256 (prime: 2**256 - 2**224 + 2**192 + 2**96 - 1)
 field_integer!(
