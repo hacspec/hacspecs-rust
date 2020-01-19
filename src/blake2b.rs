@@ -55,7 +55,7 @@ fn inc_counter(t: Counter, x: u64) -> Counter {
     let mut result: Counter = Counter([0u64; 2]);
     result[0] = t[0] + x;
     if result[0] < x {
-        result[1] = t[1] + 1;
+        result[1] = t[1] + 1u64;
     }
     result
 }
@@ -89,7 +89,8 @@ fn compress(h: State, m: Buffer, t: Counter, last_block: bool) -> State {
     v[12] ^= U64::classify(foo0);
     v[13] ^= U64::classify(foo1);
     if last_block {
-        v[14] = !v[14];
+        let old_v: U64 = v[14];
+        v[14] = !old_v;
     }
 
     // Mixing.

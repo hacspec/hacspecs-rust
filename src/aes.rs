@@ -43,7 +43,7 @@ const RCON: RCon = RCon(secret_bytes!([
 fn sub_bytes(state: Block) -> Block {
     let mut st = state;
     for i in 0..16 {
-        st[i] = SBOX[U8::declassify(state[i]) as usize];
+        st[i] = SBOX[U8::declassify(state[i])];
     }
     st
 }
