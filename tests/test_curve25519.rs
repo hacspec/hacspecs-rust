@@ -1,7 +1,3 @@
-extern crate hacspec;
-use hacspec::*;
-
-extern crate hacspecs;
 use hacspecs::curve25519::*;
 
 fn ecdh(s: SerializedScalar, u: SerializedPoint, expected: SerializedPoint) {
