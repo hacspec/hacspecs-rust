@@ -1,6 +1,5 @@
 // Import hacspec and all needed definitions.
-use hacspec::*;
-hacspec_imports!();
+use hacspec::prelude::*;
 
 // Get Key, Block, and BLOCKSIZE types
 // use crate::aes::{Key, Block};
@@ -13,7 +12,7 @@ bytes!(Tag, BLOCKSIZE);
 
 // TODO: Use a 128-bit uint_n instead?
 type Element = u128;
-const IRRED: Element = 0xE1000000000000000000000000000000;
+const IRRED: Element = 0xE100_0000_0000_0000_0000_0000_0000_0000;
 
 fn fadd(x: Element, y: Element) -> Element {
     x ^ y
@@ -29,7 +28,7 @@ fn fmul(x: Element, y: Element) -> Element {
         if sh & 1 != 0 {
             sh = (sh >> 1) ^ IRRED;
         } else {
-            sh = sh >> 1;
+            sh >>= 1;
         }
     }
     res

@@ -1,6 +1,5 @@
 // Import hacspec and all needed definitions.
-use hacspec::*;
-hacspec_imports!();
+use hacspec::prelude::*;
 // TODO: move to hacspec_imports if we want to use it!
 use contracts::*;
 

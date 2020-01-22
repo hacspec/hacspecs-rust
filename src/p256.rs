@@ -1,6 +1,5 @@
 // Import hacspec and all needed definitions.
-use hacspec::*;
-hacspec_imports!();
+use hacspec::prelude::*;
 
 // Define field P256 (prime: 2**256 - 2**224 + 2**192 + 2**96 - 1)
 #[field(ffffffff00000001000000000000000000000000ffffffffffffffffffffffff)]
@@ -71,8 +70,7 @@ fn point_add(p: Jacobian, q: Jacobian) -> Jacobian {
 
     if u1 == u2 {
         if s1 == s2 {
-            assert!(false);
-            return point_double(p);
+            unreachable!();
         } else {
             return Jacobian(
                 FieldElement::from(0),

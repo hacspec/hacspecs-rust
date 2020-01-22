@@ -1,6 +1,5 @@
 // Import hacspec and all needed definitions.
-use hacspec::*;
-hacspec_imports!();
+use hacspec::prelude::*;
 
 // Import chacha20 and poly1305
 use crate::chacha20::*;
@@ -55,7 +54,7 @@ pub fn decrypt(
     let padded_msg = pad_aad_msg(aad, cipher_text.clone());
     let my_tag = poly(padded_msg, mac_key);
     if my_tag == tag {
-        match chacha(key, iv, cipher_text.clone()) {
+        match chacha(key, iv, cipher_text) {
             Ok(c) => Ok(c),
             Err(r) => {
                 println!("Error decrypting chacha20: {}", r);
