@@ -1,6 +1,5 @@
 // Import hacspec and all needed definitions.
-use hacspec::*;
-hacspec_imports!();
+use hacspec::prelude::*;
 
 // Define field P256 (prime: 2**256 - 2**224 + 2**192 + 2**96 - 1)
 #[field(ffffffff00000001000000000000000000000000ffffffffffffffffffffffff)]

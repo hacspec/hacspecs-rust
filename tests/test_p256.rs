@@ -1,7 +1,5 @@
-extern crate hacspec;
-use hacspec::*;
+use hacspec::prelude::*;
 
-extern crate hacspecs;
 use hacspecs::p256::*;
 
 #[test]

@@ -1,6 +1,5 @@
 // Import hacspec and all needed definitions.
-use hacspec::*;
-hacspec_imports!();
+use hacspec::prelude::*;
 
 // Define field mod 2^255-19
 #[field(7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffed)]

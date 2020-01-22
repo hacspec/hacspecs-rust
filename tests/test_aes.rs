@@ -1,7 +1,5 @@
-extern crate hacspec;
-use hacspec::*;
+use hacspec::prelude::*;
 
-extern crate hacspecs;
 use hacspecs::aes::*;
 
 fn enc_dec_test(m: ByteSlice, key: Key, iv: Nonce, ctr: u32, ctxt: Option<ByteSlice>) {

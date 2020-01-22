@@ -1,7 +1,4 @@
-extern crate hacspec;
-use hacspec::*;
-
-extern crate hacspecs;
+use hacspec::prelude::*;
 use hacspecs::{chacha20::*, chacha20poly1305, poly1305::*};
 
 #[test]
