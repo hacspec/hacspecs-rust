@@ -1,5 +1,3 @@
-use hacspec::prelude::*;
-
 use hacspecs::p256::*;
 
 #[test]

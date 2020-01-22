@@ -70,8 +70,7 @@ fn point_add(p: Jacobian, q: Jacobian) -> Jacobian {
 
     if u1 == u2 {
         if s1 == s2 {
-            assert!(false);
-            return point_double(p);
+            unreachable!();
         } else {
             return Jacobian(
                 FieldElement::from(0),
