@@ -15,3 +15,5 @@ pub mod hpke;
 pub mod p256;
 pub mod poly1305;
 pub mod sha2;
+pub mod hkdf;
+pub mod hmac;

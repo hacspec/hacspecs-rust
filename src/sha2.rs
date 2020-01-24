@@ -1,8 +1,7 @@
 // Import hacspec and all needed definitions.
 use hacspec::prelude::*;
 
-#[derive(Copy, Clone)]
-enum Variant {
+pub enum Variant {
     SHA224 = 224,
     SHA256 = 256,
     SHA384 = 384,
@@ -10,9 +9,9 @@ enum Variant {
 }
 
 const BLOCK_SIZE: usize = 64;
-const K_SIZE: usize = 64;
 const LEN_SIZE: usize = 8;
-const HASH_SIZE: usize = Variant::SHA256 as usize / 8;
+pub const K_SIZE: usize = 64;
+pub const HASH_SIZE: usize = Variant::SHA256 as usize / 8;
 
 bytes!(Block, BLOCK_SIZE);
 bytes!(OpTableType, 12);
