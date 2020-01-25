@@ -85,7 +85,7 @@ pub fn scalarmult(s: SerializedScalar, p: SerializedPoint) -> SerializedPoint {
 }
 
 pub fn secret_to_public(s: SerializedScalar) -> SerializedPoint {
-    let base = SerializedPoint::from("9");
+    let base = SerializedPoint::from("09");
     scalarmult(s, base)
 }
 
