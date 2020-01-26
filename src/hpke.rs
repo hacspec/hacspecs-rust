@@ -1,19 +1,20 @@
 #![allow(dead_code)]
 
 // Import hacspec and all needed definitions.
-use hacspec::*;
-hacspec_imports!();
+use hacspec::prelude::*;
 
 // Import primitives
 use crate::curve25519;
 use crate::sha2;
 use crate::hkdf;
+use crate::aesgcm;
 
 bytes!(PK, 32);
 bytes!(SK, 32);
 bytes!(MD, 32);
-bytes!(Key, 32);
-type MarshalledPk = [u8; 32];
+bytes!(Key, 16);
+bytes!(Nonce, 12);
+bytes!(MarshalledPk, 32);
 type Ciphersuite = [u8; 6];
 
 // TODO: ugh, we shouldn't allow derives, but we need it -> add library function for something like this.
@@ -71,6 +72,13 @@ struct HpkeContext {
     info_hash: MD,
 }
 
+struct Context {
+    key: Key,
+    nonce: Nonce,
+    exporter_secret: Key,
+    sequence_number: u32,
+}
+
 // Generate random x25519 key `(PK, SK)`.
 fn generate_key_pair() -> (PK, SK) {
     let sk = SK::random();
@@ -89,11 +97,11 @@ fn dh(sk: SK, pk: PK) -> PK {
 }
 
 fn marshal(pk: PK) -> MarshalledPk {
-    pk.into()
+    pk.raw().into()
 }
 
 fn unmarshal(enc: MarshalledPk) -> PK {
-    enc.into()
+    enc.raw().into()
 }
 
 fn encap(pk_r: PK) -> (PK, MarshalledPk) {
@@ -189,9 +197,9 @@ fn concat_ctx(
     let mut out = Bytes::new_len(0);
     out.push(mode as u8);
     out.extend_from_slice(&ciphersuite);
-    out.extend_from_slice(&enc);
-    out.extend_from_slice(&pk_rm);
-    out.extend_from_slice(&pk_im);
+    out.extend_from_slice(enc.raw());
+    out.extend_from_slice(pk_rm.raw());
+    out.extend_from_slice(pk_im.raw());
     out.extend_from_slice(psk_id_hash.raw());
     out.extend_from_slice(info_hash.raw());
     out
@@ -201,15 +209,17 @@ fn extract(psk: PSK, zz: [u8; 64]) -> MD {
     hkdf::extract(Bytes::from(psk.raw()), Bytes::from(&zz[..])).raw().into()
 }
 
-fn expand(secret: MD, label: Bytes, nk: usize) -> Key {
-    hkdf::expand(Bytes::from(secret.raw()), label, nk).raw().into()
+fn expand(secret: MD, label: Bytes, n: usize) -> Bytes {
+    Bytes::from(hkdf::expand(Bytes::from(secret.raw()), label, n).raw())
 }
 
 fn concat_label(label: String, context: Bytes) -> Bytes {
     let mut out = Bytes::new_len(0);
     // TODO: this is UTF-8 string to bytes conversion.
     out.extend_from_slice(label.as_bytes());
+    println!("{:x?}", out);
     out.extend(context);
+    println!("{:x?}", out);
     out
 }
 
@@ -222,7 +232,7 @@ fn key_schedule(
     psk: PSK,
     psk_id: Bytes,
     pk_im: MarshalledPk,
-) -> HpkeContext {
+) -> Context {
     verify_mode(mode, psk, psk_id.clone(), pk_im);
 
     let pk_rm = marshal(pk_r);
@@ -236,50 +246,76 @@ fn key_schedule(
 
     let secret = extract(psk, zz);
     let nk = Key::capacity();
-    let nn = 32;
+    let nn = Nonce::capacity();
     let key = expand(
         secret,
         concat_label("hpke key".to_string(), context.clone()),
         nk,
     );
-    // TODO: expand always returns Key, which has length 32.
-    let nonce = expand(secret, concat_label("hpke nonce".to_string(), context), nn);
-    HpkeContext {
-        mode: mode,
-        kem_id: kem_id,
-        kdf_id: kdf_id,
-        aead_id: aead_id,
-        enc: enc,
-        pk_r: pk_r,
-        pk_i: pk_im,
-        psk_id_hash: psk_id_hash,
-        info_hash: info_hash,
+    let nonce = expand(secret, concat_label("hpke nonce".to_string(), context.clone()), nn);
+    let exporter_secret = expand(secret, concat_label("hpke exp".to_string(), context), nk);
+    Context {
+        key: Key::from(key.raw()),
+        nonce: Nonce::from(nonce.raw()),
+        exporter_secret: Key::from(exporter_secret.raw()),
+        sequence_number: 0,
     }
 }
 
-fn setup_auth_psk_i(pk_r: PK, info: Bytes, psk: PSK, psk_id: Bytes, sk_i: SK) -> HpkeContext {
+fn setup_auth_psk_i(pk_r: PK, info: Bytes, psk: PSK, psk_id: Bytes, sk_i: SK) -> (MarshalledPk, Context) {
     let (zz, enc) = auth_encap(pk_r, sk_i);
     let pk_im = marshal(pk(sk_i));
     let key_schedule = key_schedule(Mode::ModePskAuth, pk_r, zz, enc, info, psk, psk_id, pk_im);
-    key_schedule
+    (enc, key_schedule)
 }
 
-fn setup_auth_psk_r(enc: MarshalledPk, sk_r: SK, info: Bytes, psk: PSK, psk_id: Bytes, pk_i: PK) -> HpkeContext {
+fn setup_auth_psk_r(enc: MarshalledPk, sk_r: SK, info: Bytes, psk: PSK, psk_id: Bytes, pk_i: PK) -> Context {
     let zz = auth_decap(enc, sk_r, pk_i);
     let pk_im = marshal(pk_i);
     let key_schedule = key_schedule(Mode::ModePskAuth, pk(sk_r), zz, enc, info, psk, psk_id, pk_im);
     key_schedule
 }
 
+fn Seal(key: Key, nonce: Nonce, aad: Bytes, pt: Bytes) -> Bytes {
+    let (ct, tag) = aesgcm::encrypt(key.raw().into(), nonce.raw().into(), aad.get_slice(), pt.get_slice());
+    let mut out = Bytes::new();
+    out.extend(ct);
+    out.extend_from_slice(tag.raw());
+    out
+}
+
+impl Context {
+    fn Nonce(&self, seq: u32) -> Nonce {
+        let mut enc_seq = Nonce::new();
+        // TODO: ugh
+        for i in 0..4 {
+            enc_seq[Nonce::capacity()-1-i] = u32::to_be_bytes(seq)[3-i];
+        }
+        self.nonce ^ enc_seq
+    }
+    
+    fn IncrementSeq(&mut self) {
+        self.sequence_number += 1;
+    }
+    
+    fn Seal(&mut self, aad: Bytes, pt: Bytes) -> Bytes {
+        let ct = Seal(self.key, self.Nonce(self.sequence_number), aad, pt);
+        self.IncrementSeq();
+        ct
+    }
+}
+
 // === TODO: Move Test ===
 
+#[derive(Debug)]
 struct HPKEEncryption<'a> {
-    sequence_number: u8,
+    sequence_number: u32,
     plaintext: &'a str,
     aad: &'a str,
     ciphertext: &'a str
 }
 
+#[derive(Debug)]
 struct HPKETestVector<'a> {
     mode: u8,
     kem_id: u16,
@@ -355,10 +391,18 @@ const HPKE_KAT: [HPKETestVector; 1] = [
 #[test]
 fn test_kat() {
     for kat in HPKE_KAT.iter() {
-        let context_i = setup_auth_psk_i(PK::from(kat.pk_r), Bytes::from(kat.info), PSK::from(kat.psk), Bytes::from(kat.psk_id), SK::from(kat.sk_i));
-        assert_eq!(kat.mode, context_i.mode as u8);
-        assert_eq!(kat.kem_id, context_i.kem_id as u16);
-        assert_eq!(kat.kdf_id, context_i.kdf_id as u16);
-        assert_eq!(kat.aead_id, context_i.aead_id as u16);
+        println!("kat: {:?}", kat);
+        // let (enc_i, context_i) = setup_auth_psk_i(PK::from(kat.pk_r), Bytes::from(kat.info), PSK::from(kat.psk), Bytes::from(kat.psk_id), SK::from(kat.sk_i));
+        for encryption in kat.encryptions.iter() {
+            println!("encryption: {:?}", encryption);
+            let mut ctx = Context {
+                key: Key::from(kat.key),
+                nonce: Nonce::from(kat.nonce),
+                exporter_secret: Key::from(""),
+                sequence_number: encryption.sequence_number,
+            };
+            let ct = ctx.Seal(Bytes::from(encryption.aad), Bytes::from(encryption.plaintext));
+            assert_eq!(Bytes::from(encryption.ciphertext), ct);
+        }
     }
 }
