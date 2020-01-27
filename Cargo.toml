@@ -10,6 +10,8 @@ hacspec = "0.1"
 wrapping_arithmetic = "0.1"
 contracts = "0.3"
 paste = "0.1"
+serde_json = "1.0"
+serde = {version = "1.0", features = ["derive"]}
 uint = { git = "https://github.com/franziskuskiefer/rust-uint-n" }
 # uint = { path = "../rust-uint-n" }
 

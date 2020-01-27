@@ -16,6 +16,8 @@ bytes!(Key, 16);
 bytes!(Nonce, 12);
 bytes!(MarshalledPk, 32);
 type Ciphersuite = [u8; 6];
+type PSK = Bytes;
+type AAD = Bytes;
 
 // TODO: ugh, we shouldn't allow derives, but we need it -> add library function for something like this.
 #[derive(PartialEq, Copy, Clone)]
@@ -48,10 +50,6 @@ enum Aead {
     AES_GCM_256 = 0x0002,
     CHACHA20_POLY1305 = 0x0003,
 }
-
-// TODO ...
-bytes!(AAD, 42);
-bytes!(PSK, 42);
 
 struct HpkeContext {
     // Mode and algorithms
@@ -145,7 +143,7 @@ fn zero(len: usize) -> Bytes {
 // TODO: actually fail or something
 fn verify_mode(mode: Mode, psk: PSK, psk_id: Bytes, pk_im: MarshalledPk) {
     let default_pk_im = zero(pk_im.len());
-    let default_psk = zero(PSK::capacity());
+    let default_psk = zero(psk.len());
     let default_psk_id = Bytes::new();
 
     let got_psk = psk[..] != default_psk[..] && psk_id != default_psk_id;
@@ -233,7 +231,7 @@ fn key_schedule(
     psk_id: Bytes,
     pk_im: MarshalledPk,
 ) -> Context {
-    verify_mode(mode, psk, psk_id.clone(), pk_im);
+    verify_mode(mode, psk.clone(), psk_id.clone(), pk_im);
 
     let pk_rm = marshal(pk_r);
     let kem_id: Kem = Kem::DHKEM_25519;
@@ -244,7 +242,7 @@ fn key_schedule(
     let info_hash = hash(info);
     let context = concat_ctx(mode, ciphersuite, enc, pk_rm, pk_im, psk_id_hash, info_hash);
 
-    let secret = extract(psk, zz);
+    let secret = extract(psk.clone(), zz);
     let nk = Key::capacity();
     let nn = Nonce::capacity();
     let key = expand(
@@ -403,6 +401,58 @@ fn test_kat() {
             };
             let ct = ctx.Seal(Bytes::from(encryption.aad), Bytes::from(encryption.plaintext));
             assert_eq!(Bytes::from(encryption.ciphertext), ct);
+        }
+    }
+}
+
+#[test]
+fn test_kat_json() {
+    create_test_vectors!{
+        Encryptions,
+        plaintext: String,
+        aad: String,
+        ciphertext: String,
+        nonce: String
+    };
+    create_test_vectors!{
+        SetupInformation,
+        mode: u8,
+        kemID: u16,
+        kdfID: u16,
+        aeadID: u16,
+        info: String,
+        skR: String,
+        skI: String,
+        skE: String,
+        psk: String,
+        pskID: String,
+        pkR: String,
+        pkI: String,
+        pkE: String,
+        enc: String,
+        zz: String,
+        context: String,
+        secret: String,
+        key: String,
+        nonce: String,
+        encryptions: Vec<Encryptions>
+    };
+    // TODO: test vectors are different from current draft.
+    let tests = SetupInformation::new_array("tests/hpke-test-vectors.json");
+    for test in tests {
+        // TODO: this is the only one implemented so far.
+        if test.aeadID == (Aead::AES_GCM_128 as u16) {
+            for encryption in test.encryptions {
+                println!("encryption: {:?}", encryption.clone());
+                let mut ctx = Context {
+                    key: Key::from(test.key.clone()),
+                    nonce: Nonce::from(encryption.nonce),
+                    exporter_secret: Key::from(""),
+                    sequence_number: 0,
+                };
+                let ct = ctx.Seal(Bytes::from(encryption.aad), Bytes::from(encryption.plaintext));
+                assert_eq!(Bytes::from(encryption.ciphertext), ct);
+            }
         }
     }
 }
