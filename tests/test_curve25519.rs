@@ -1,6 +1,5 @@
 extern crate hacspec;
-use hacspec::*;
-hacspec_imports!();
+use hacspec::prelude::*;
 
 extern crate hacspecs;
 use hacspecs::curve25519::*;

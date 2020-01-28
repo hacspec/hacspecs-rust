@@ -1,4 +1,3 @@
-extern crate hacspec;
 extern crate hacspecs;
 use hacspecs::p256::*;
 

@@ -1,6 +1,5 @@
 // Import hacspec and all needed definitions.
-use hacspec::*;
-hacspec_imports!();
+use hacspec::prelude::*;
 
 // Type definitions for use in chacha.
 

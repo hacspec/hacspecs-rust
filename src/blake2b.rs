@@ -1,6 +1,5 @@
 // Import hacspec and all needed definitions.
-use hacspec::*;
-hacspec_imports!();
+use hacspec::prelude::*;
 
 array!(State, 8, U64, u64);
 array!(DoubleState, 16, U64, u64);

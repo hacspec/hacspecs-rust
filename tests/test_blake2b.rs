@@ -1,6 +1,5 @@
 extern crate hacspec;
-use hacspec::*;
-hacspec_imports!();
+use hacspec::prelude::*;
 
 use hacspecs::blake2b::*;
 

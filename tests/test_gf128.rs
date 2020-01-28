@@ -1,5 +1,4 @@
-use hacspec::*;
-hacspec_imports!();
+use hacspec::prelude::*;
 
 use hacspecs::gf128::*;
 
