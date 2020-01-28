@@ -1,3 +1,4 @@
+extern crate hacspec;
 use hacspec::prelude::*;
 
 extern crate hacspecs;
@@ -53,15 +54,24 @@ fn kat_test() {
         let k = aes::Key::from(kat.key);
         let nonce = aes::Nonce::from(kat.nonce);
         let exp_mac = gf128::Tag::from(kat.exp_mac);
-        vlbytes!(msg, msg_, kat.msg);
-        vlbytes!(aad, aad_, kat.aad);
-        vlbytes!(exp_cipher, exp_cipher_, kat.exp_cipher);
+        let msg = ByteSeq::from(kat.msg);
+        let aad = ByteSeq::from(kat.aad);
+        let exp_cipher = ByteSeq::from(kat.exp_cipher);
 
-        let (cipher, mac) = encrypt(k, nonce, aad, msg);
-        assert_eq!(exp_cipher, cipher.get_slice());
-        assert_eq!(exp_mac, mac);
+        let (cipher, mac) = encrypt(k, nonce, aad.clone(), msg.clone());
+        assert_eq!(
+            exp_cipher.iter().map(|x| U8::declassify(*x)).collect::<Vec<_>>(),
+            cipher.iter().map(|x| U8::declassify(*x)).collect::<Vec<_>>()
+        );
+        assert_eq!(
+            exp_mac.iter().map(|x| U8::declassify(*x)).collect::<Vec<_>>(),
+            mac.iter().map(|x| U8::declassify(*x)).collect::<Vec<_>>()
+        );
 
-        let decrypted_msg = decrypt(k, nonce, aad, cipher.get_slice(), mac).unwrap();
-        assert_eq!(msg, decrypted_msg.get_slice());
+        let decrypted_msg = decrypt(k, nonce, aad, cipher, mac).unwrap();
+        assert_eq!(
+            msg.iter().map(|x| U8::declassify(*x)).collect::<Vec<_>>(),
+            decrypted_msg.iter().map(|x| U8::declassify(*x)).collect::<Vec<_>>()
+        );
     }
 }
