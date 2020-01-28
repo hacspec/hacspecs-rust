@@ -65,7 +65,7 @@ fn point_add_and_double(q: Point, nq: Point, nqp1: Point) -> (Point, Point) {
     let x_3 = (da + cb).pow(2);
     let z_3 = x_1 * ((da - cb).pow(2));
     let x_2 = aa * bb;
-    let e121665 = FieldElement::from_literal(121665);
+    let e121665 = FieldElement::from_literal(121_665);
     let z_2 = e * (aa + (e121665 * e));
     ((x_2, z_2), (x_3, z_3))
 }

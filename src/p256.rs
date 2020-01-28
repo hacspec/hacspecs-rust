@@ -71,16 +71,12 @@ fn point_add(p: Jacobian, q: Jacobian) -> Jacobian {
     let s2 = (y2 * z1) * z1z1;
 
     if u1 == u2 {
-        if s1 == s2 {
-            assert!(false);
-            return point_double(p);
-        } else {
-            return (
-                FieldElement::from_literal(0),
-                FieldElement::from_literal(1),
-                FieldElement::from_literal(0),
-            );
-        }
+        assert_ne!(s1, s2);
+        return (
+            FieldElement::from_literal(0),
+            FieldElement::from_literal(1),
+            FieldElement::from_literal(0),
+        );
     }
 
     let h = u2 - u1;

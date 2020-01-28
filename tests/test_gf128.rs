@@ -1,7 +1,6 @@
-extern crate hacspec;
 use hacspec::*;
+hacspec_imports!();
 
-extern crate hacspecs;
 use hacspecs::gf128::*;
 
 #[test]

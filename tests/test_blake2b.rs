@@ -2,7 +2,6 @@ extern crate hacspec;
 use hacspec::*;
 hacspec_imports!();
 
-extern crate hacspecs;
 use hacspecs::blake2b::*;
 
 static EXPECTED_ABC: [u8; 64] = [

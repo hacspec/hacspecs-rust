@@ -13,7 +13,7 @@ bytes!(Tag, BLOCKSIZE);
 
 // TODO: Use a 128-bit uint_n instead?
 type Element = U128;
-const IRRED: Element = U128(0xE1000000000000000000000000000000);
+const IRRED: Element = U128(0xE100_0000_0000_0000_0000_0000_0000_0000);
 
 fn fadd(x: Element, y: Element) -> Element {
     x ^ y
@@ -29,7 +29,7 @@ fn fmul(x: Element, y: Element) -> Element {
         if (sh & U128(1)).declassify() != U128(0).declassify() {
             sh = (sh >> 1) ^ IRRED;
         } else {
-            sh = sh >> 1;
+            sh >>= 1;
         }
     }
     res

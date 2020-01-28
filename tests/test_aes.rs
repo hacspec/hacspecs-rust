@@ -2,7 +2,6 @@ extern crate hacspec;
 use hacspec::*;
 hacspec_imports!();
 
-extern crate hacspecs;
 use hacspecs::aes::*;
 
 fn enc_dec_test(m: ByteSeq, key: Key, iv: Nonce, ctr: U32, ctxt: Option<ByteSeq>) {
