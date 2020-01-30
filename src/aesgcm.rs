@@ -3,11 +3,11 @@ use hacspec::prelude::*;
 
 // Import aes and gcm
 use crate::aes;
-use crate::aes::{aes128_ctr_keyblock, aes128_decrypt, aes128_encrypt};
+use crate::aes::{aes128_ctr_keyblock, aes128_decrypt, aes128_encrypt, Block};
 
-use crate::gf128::{gmac, Tag};
+use crate::gf128::{gmac, Tag, Key};
 
-fn pad_aad_msg(aad: ByteSlice, msg: ByteSlice) -> Bytes {
+fn pad_aad_msg(aad: ByteSeq, msg: ByteSeq) -> ByteSeq {
     let laad = aad.len();
     let lmsg = msg.len();
     let pad_aad = if laad % 16 == 0 {
@@ -20,48 +20,47 @@ fn pad_aad_msg(aad: ByteSlice, msg: ByteSlice) -> Bytes {
     } else {
         lmsg + (16 - (lmsg % 16))
     };
-    let mut padded_msg = Bytes::new_len(pad_aad + pad_msg + 16);
-    padded_msg.update_slice(0, aad);
-    padded_msg.update_slice(pad_aad, msg);
-    padded_msg.update_raw(pad_aad + pad_msg, &(laad as u64 * 8).to_be_bytes());
-    padded_msg.update_raw(pad_aad + pad_msg + 8, &(lmsg as u64 * 8).to_be_bytes());
+    let mut padded_msg = ByteSeq::new_len(pad_aad + pad_msg + 16);
+    padded_msg = padded_msg.update(0, aad);
+    padded_msg = padded_msg.update(pad_aad, msg);
+    padded_msg = padded_msg.update(pad_aad + pad_msg, u64_to_be_bytes(U64(laad as u64) * U64(8)));
+    padded_msg = padded_msg.update(pad_aad + pad_msg + 8, u64_to_be_bytes(U64(lmsg as u64) * U64(8)));
     padded_msg
 }
 
 // FIXME: fix type conversions :(
-pub fn encrypt(key: aes::Key, iv: aes::Nonce, aad: ByteSlice, msg: ByteSlice) -> (Bytes, Tag) {
+pub fn encrypt(key: aes::Key, iv: aes::Nonce, aad: ByteSeq, msg: ByteSeq) -> (ByteSeq, Tag) {
     let iv0 = aes::Nonce::new();
 
-    let mac_key = aes128_ctr_keyblock(key, iv0, 0);
-    let tag_mix = aes128_ctr_keyblock(key, iv, 1);
+    let mac_key = aes128_ctr_keyblock(key, iv0, U32(0));
+    let tag_mix = aes128_ctr_keyblock(key, iv, U32(1));
 
-    let cipher_text = aes128_encrypt(key, iv, 2, msg);
-    let padded_msg = pad_aad_msg(aad, cipher_text.get_slice());
-    let tag = gmac(padded_msg, mac_key.raw().into());
-    let tag = aes::xor_block(tag.raw().into(), tag_mix);
+    let cipher_text = aes128_encrypt(key, iv, U32(2), msg);
+    let padded_msg = pad_aad_msg(aad, cipher_text.clone());
+    let tag = gmac(padded_msg, Key::copy(mac_key));
+    let tag = aes::xor_block(Block::copy(tag), tag_mix);
 
-    (cipher_text, tag.raw().into())
+    (cipher_text, Tag::copy(tag))
 }
 
 pub fn decrypt(
     key: aes::Key,
     iv: aes::Nonce,
-    aad: ByteSlice,
-    cipher_text: ByteSlice,
+    aad: ByteSeq,
+    cipher_text: ByteSeq,
     tag: Tag,
-) -> Result<Bytes, String> {
+) -> Result<ByteSeq, String> {
     let iv0 = aes::Nonce::new();
 
-    let mac_key = aes128_ctr_keyblock(key, iv0, 0);
-    let tag_mix = aes128_ctr_keyblock(key, iv, 1);
+    let mac_key = aes128_ctr_keyblock(key, iv0, U32(0));
+    let tag_mix = aes128_ctr_keyblock(key, iv, U32(1));
 
-    let padded_msg = pad_aad_msg(aad, cipher_text);
-    let my_tag = gmac(padded_msg, mac_key.raw().into());
-    let my_tag = aes::xor_block(my_tag.raw().into(), tag_mix);
-    let my_tag: Tag = my_tag.raw().into();
+    let padded_msg = pad_aad_msg(aad, cipher_text.clone());
+    let my_tag = gmac(padded_msg, Key::copy(mac_key));
+    let my_tag = aes::xor_block(Block::copy(my_tag), tag_mix);
 
-    if my_tag == tag {
-        Ok(aes128_decrypt(key, iv, 2, cipher_text))
+    if my_tag == Block::copy(tag) {
+        Ok(aes128_decrypt(key, iv, U32(2), cipher_text))
     } else {
         Err("Mac verification failed".to_string())
     }
