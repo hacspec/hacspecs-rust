@@ -12,6 +12,6 @@ hacspec = { git = "https://github.com/hacspec/hacspec-rust", branch="denismerigo
 contracts = "0.3"
 paste = "0.1"
 
-secret_integers = "0.1.5"
+secret_integers = "0.1.6"
 abstract_integers = "0.1.3"
 # abstract_integers = { path = "../rust-abstract-integers" }
