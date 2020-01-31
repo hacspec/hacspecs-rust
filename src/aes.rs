@@ -202,7 +202,6 @@ pub(crate) fn xor_block(block: Block, keyblock: Block) -> Block {
     out
 }
 
-// FIXME: output shouldn't be ByteSeq (Seq<U8>) but Seq<u8>!
 fn aes128_counter_mode(key: Key, nonce: Nonce, counter: U32, msg: ByteSeq) -> ByteSeq {
     let l = msg.len();
     let n_blocks: usize = l / BLOCKSIZE;
