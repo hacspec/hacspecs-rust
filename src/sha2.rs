@@ -13,15 +13,15 @@ const LEN_SIZE: usize = 8;
 pub const K_SIZE: usize = 64;
 pub const HASH_SIZE: usize = Variant::SHA256 as usize / 8;
 
-public_bytes!(Block, BLOCK_SIZE);
-public_bytes!(OpTableType, 12);
-public_bytes!(Digest, HASH_SIZE);
-public_bytes!(h0_t, 8);
-public_array!(RoundConstantsTable, K_SIZE, u32);
-public_array!(Hash, 8, WordT);
+bytes!(Block, BLOCK_SIZE);
+bytes!(OpTableType, 12);
+bytes!(Digest, HASH_SIZE);
+bytes!(h0_t, 8);
+array!(RoundConstantsTable, K_SIZE, U32, u32);
+array!(Hash, 8, WordT, u32);
 
-type LenT = u64;
-type WordT = u32;
+type LenT = U64;
+type WordT = U32;
 
 fn ch(x: WordT, y: WordT, z: WordT) -> WordT {
     (x & y) ^ ((!x) & z)
@@ -32,20 +32,19 @@ fn maj(x: WordT, y: WordT, z: WordT) -> WordT {
 }
 
 fn sigma(x: WordT, i: usize, op: usize) -> WordT {
-    let op_table = OpTableType::from([2, 13, 22, 6, 11, 25, 7, 18, 3, 17, 19, 10]);
-    let tmp = if op == 0 {
-        x >> op_table[3*i+2]
+    let op_table = OpTableType::from([2u8, 13, 22, 6, 11, 25, 7, 18, 3, 17, 19, 10]);
+    let tmp: WordT = if op == 0 {
+        x >> op_table[3*i+2].into()
     } else {
-        x.rotate_right(u32::from(op_table[3*i+2]))
+        x.rotate_right(op_table[3*i+2].into())
     };
-    x.rotate_right(u32::from(op_table[3*i])) ^
-    x.rotate_right(u32::from(op_table[3*i+1])) ^
+    x.rotate_right(op_table[3*i].into()) ^
+    x.rotate_right(op_table[3*i+1].into()) ^
     tmp
 }
 
-#[wrappit]
 fn schedule(block: Block) -> RoundConstantsTable {
-    let b = block.to_u32s_be();
+    let b = block.to_U32s_be();
     let mut s = RoundConstantsTable::new();
     for i in 0..K_SIZE {
         if i < 16 {
@@ -64,7 +63,6 @@ fn schedule(block: Block) -> RoundConstantsTable {
     s
 }
 
-#[wrappit]
 fn shuffle(ws:  RoundConstantsTable, hashi: Hash) -> Hash {
     let k_table = RoundConstantsTable::from([
         0x428a_2f98, 0x7137_4491, 0xb5c0_fbcf, 0xe9b5_dba5, 0x3956_c25b, 0x59f1_11f1, 0x923f_82a4,
@@ -84,7 +82,7 @@ fn shuffle(ws:  RoundConstantsTable, hashi: Hash) -> Hash {
         let a0 = h[0];
         let b0 = h[1];
         let c0 = h[2];
-        let d0: WordT = h[3]; // TODO: not sure why we have to add types here
+        let d0 = h[3];
         let e0 = h[4];
         let f0 = h[5];
         let g0 = h[6];
@@ -109,8 +107,7 @@ fn compress(block: Block, h_in: Hash) -> Hash {
     let s = schedule(block);
     let mut h = shuffle(s, h_in);
     for i in 0..8 {
-        // FIXME: Ugly
-        h[i] = (h[i] as u32).wrapping_add(h_in[i]);
+        h[i] += h_in[i];
     }
     h
 }
@@ -122,21 +119,19 @@ pub fn hash(msg: MyByteSeq) -> Digest {
         if block.len() < BLOCK_SIZE {
             // Add padding for last block
             let mut last_block = Block::new();
-            last_block.update_sub(0, Block::from(block), 0, block.len());
-            last_block[block.len()] = 0x80;
-            // FIXME: len_bist is not secret!
-            let len_bist = (msg.len() * 8) as u64;
+            last_block = last_block.update_sub(0, Block::from(block), 0, block.len());
+            last_block[block.len()] = U8(0x80);
+            let len_bist = U64::from(msg.len() * 8);
             if block.len() < BLOCK_SIZE - LEN_SIZE {
-                last_block.update_sub(BLOCK_SIZE - LEN_SIZE, u64_to_be_bytes_u64(len_bist), 0, 4);
+                last_block = last_block.update_sub(BLOCK_SIZE - LEN_SIZE, u64_to_be_bytes(len_bist), 0, 8);
                 h = compress(last_block, h);
             } else {
-                let pad_block = Block::new();
-                pad_block.update_sub(BLOCK_SIZE - LEN_SIZE, u64_to_be_bytes_u64(len_bist), 0, 4);
+                let mut pad_block = Block::new();
+                pad_block = pad_block.update_sub(BLOCK_SIZE - LEN_SIZE, u64_to_be_bytes(len_bist), 0, 8);
                 h = compress(last_block, h);
                 h = compress(pad_block, h);
             }
         } else {
-            // TODO: drop into
             h = compress(block.into(), h);
         }
     }
