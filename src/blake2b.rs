@@ -1,11 +1,12 @@
 // Import hacspec and all needed definitions.
 use hacspec::prelude::*;
 
-array!(State, 8, U64, u64);
 array!(DoubleState, 16, U64, u64);
 public_array!(Counter, 2, u64);
 bytes!(Buffer, 128);
 bytes!(Digest, 64);
+
+both_arrays!(PublicState, State, 8, U64, u64);
 public_array!(Sigma, 16 * 12, usize);
 
 static SIGMA: Sigma = Sigma([
@@ -18,19 +19,16 @@ static SIGMA: Sigma = Sigma([
     9, 10, 11, 12, 13, 14, 15, 14, 10, 4, 8, 9, 15, 13, 6, 1, 12, 0, 2, 11, 7, 5, 3,
 ]);
 
-const IV: State = State(secret_array!(
-    U64,
-    [
-        0x6a09_e667_f3bc_c908u64,
-        0xbb67_ae85_84ca_a73bu64,
-        0x3c6e_f372_fe94_f82bu64,
-        0xa54f_f53a_5f1d_36f1u64,
-        0x510e_527f_ade6_82d1u64,
-        0x9b05_688c_2b3e_6c1fu64,
-        0x1f83_d9ab_fb41_bd6bu64,
-        0x5be0_cd19_137e_2179u64
-    ]
-));
+const IV: PublicState = PublicState([
+    0x6a09_e667_f3bc_c908u64,
+    0xbb67_ae85_84ca_a73bu64,
+    0x3c6e_f372_fe94_f82bu64,
+    0xa54f_f53a_5f1d_36f1u64,
+    0x510e_527f_ade6_82d1u64,
+    0x9b05_688c_2b3e_6c1fu64,
+    0x1f83_d9ab_fb41_bd6bu64,
+    0x5be0_cd19_137e_2179u64,
+]);
 
 fn mix(v: DoubleState, a: usize, b: usize, c: usize, d: usize, x: U64, y: U64) -> DoubleState {
     let mut result = v;
@@ -82,7 +80,7 @@ fn compress(h: State, m: Buffer, t: Counter, last_block: bool) -> State {
 
     // Prepare.
     v = v.update_sub(0, h, 0, 8);
-    v = v.update_sub(8, IV, 0, 8);
+    v = v.update_sub(8, State::from(IV), 0, 8);
     let foo0: u64 = t[0];
     let foo1: u64 = t[1];
     v[12] ^= U64::classify(foo0);
@@ -119,6 +117,7 @@ fn compress(h: State, m: Buffer, t: Counter, last_block: bool) -> State {
     compressed
 }
 
+// TODO: This should be a library function.
 fn get_byte(x: U64, i: usize) -> U8 {
     match i {
         0 => U8::from(x & U64(0xFF)),
@@ -134,7 +133,7 @@ fn get_byte(x: U64, i: usize) -> U8 {
 }
 
 pub fn blake2b(data: ByteSeq) -> Digest {
-    let mut h = IV;
+    let mut h = State::from(IV);
     // This only supports the 512 version without key.
     h[0] = h[0] ^ U64(0x0101_0000) ^ U64(64);
 

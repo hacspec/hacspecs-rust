@@ -7,11 +7,14 @@ edition = "2018"
 [dependencies]
 rand = "0.6"
 num = "0.2"
-hacspec = { git = "https://github.com/hacspec/hacspec-rust", branch="denismerigoux_formalization" }
-# hacspec = { path = "../hacspec-rust" }
 contracts = "0.3"
 paste = "0.1"
 
+hacspec = { git = "https://github.com/hacspec/hacspec-rust" }
 secret_integers = "0.1.6"
 abstract_integers = "0.1.3"
+
+
+# Building locally against local versions of hacspec dependencies
+# hacspec = { path = "../hacspec-rust" }
 # abstract_integers = { path = "../rust-abstract-integers" }
