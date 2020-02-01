@@ -27,12 +27,12 @@ pub fn hmac(k: ByteSeq, txt: ByteSeq) -> PRK {
 
     // TODO: we need something like append in the lib. Or do we want to stick with pre-allocation?
     let mut h_in = ByteSeq::new_len(BLOCK_LEN + txt.len());
-    h_in = h_in.update_sub(0, k_ipad, 0, BLOCK_LEN);
-    h_in = h_in.update_sub(BLOCK_LEN, txt.clone(), 0, txt.len());
+    h_in = h_in.update(0, k_ipad);
+    h_in = h_in.update(BLOCK_LEN, txt.clone());
     let h_inner = sha2::hash(h_in);
 
     let mut h_in = ByteSeq::new_len(BLOCK_LEN + h_inner.len());
-    h_in = h_in.update_sub(0, k_opad, 0, BLOCK_LEN);
-    h_in = h_in.update_sub(BLOCK_LEN, h_inner, 0, h_inner.len());
+    h_in = h_in.update(0, k_opad);
+    h_in = h_in.update(BLOCK_LEN, h_inner);
     sha2::hash(h_in).raw().into()
 }

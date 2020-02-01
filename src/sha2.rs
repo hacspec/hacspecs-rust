@@ -13,15 +13,13 @@ const LEN_SIZE: usize = 8;
 pub const K_SIZE: usize = 64;
 pub const HASH_SIZE: usize = Variant::SHA256 as usize / 8;
 
+type WordT = U32;
 bytes!(Block, BLOCK_SIZE);
 bytes!(OpTableType, 12);
 bytes!(Digest, HASH_SIZE);
-bytes!(h0_t, 8);
 array!(RoundConstantsTable, K_SIZE, U32, u32);
 array!(Hash, 8, WordT, u32);
 
-type LenT = U64;
-type WordT = U32;
 
 fn ch(x: WordT, y: WordT, z: WordT) -> WordT {
     (x & y) ^ ((!x) & z)
@@ -119,15 +117,15 @@ pub fn hash(msg: ByteSeq) -> Digest {
         if block.len() < BLOCK_SIZE {
             // Add padding for last block
             let mut last_block = Block::new();
-            last_block = last_block.update_sub(0, Block::from(block), 0, block.len());
+            last_block = last_block.update(0, Block::from(block));
             last_block[block.len()] = U8(0x80);
-            let len_bist = U64::from(msg.len() * 8);
+            let len_bist: U64 = (msg.len() * 8).into();
             if block.len() < BLOCK_SIZE - LEN_SIZE {
-                last_block = last_block.update_sub(BLOCK_SIZE - LEN_SIZE, u64_to_be_bytes(len_bist), 0, 8);
+                last_block = last_block.update(BLOCK_SIZE - LEN_SIZE, u64_to_be_bytes(len_bist));
                 h = compress(last_block, h);
             } else {
                 let mut pad_block = Block::new();
-                pad_block = pad_block.update_sub(BLOCK_SIZE - LEN_SIZE, u64_to_be_bytes(len_bist), 0, 8);
+                pad_block = pad_block.update(BLOCK_SIZE - LEN_SIZE, u64_to_be_bytes(len_bist));
                 h = compress(last_block, h);
                 h = compress(pad_block, h);
             }
