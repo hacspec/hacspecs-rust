@@ -1,11 +1,6 @@
 // Import hacspec and all needed definitions.
 use hacspec::prelude::*;
 
-// Type definitions for use in chacha.
-
-// These are type aliases for convenience
-
-// These are actual types; fixed-length arrays.
 array!(State, 16, U32, u32);
 bytes!(StateBytes, 64);
 bytes!(IV, 12);
@@ -25,13 +20,10 @@ pub fn state_to_bytes(x: State) -> StateBytes {
 
 fn line(a: usize, b: usize, d: usize, s: usize, m: State) -> State {
     let mut state = m;
-    let sb = state[b];
-    state[a] += sb;
-    let sa = state[a];
-    state[d] ^= sa;
-    // TODO: The 32 here is interpreted as i32 on Linux (not on Windows),
-    //       where .wrapping_sub is not defined.
-    state[d] = state[d] << s as u32 | state[d] >> (32usize - s) as u32;
+    // TODO: we can't write += or ^= here right now :(
+    state[a] = state[a] + state[b];
+    state[d] = state[d] ^ state[a];
+    state[d] = state[d].rotate_left(s as u32);
     state
 }
 
@@ -93,25 +85,17 @@ pub fn block(key: Key, ctr: U32, iv: IV) -> StateBytes {
 }
 
 pub fn chacha(key: Key, iv: IV, m: ByteSeq) -> Result<ByteSeq, String> {
-    let l = m.len();
-    let n_blocks: usize = l / 64;
-    let rem = l % 64;
     let mut ctr = U32(1);
-    let mut blocks_out = ByteSeq::new_len(l);
-    for i in 0..n_blocks {
-        let key_block = block(key, ctr, iv);
-        for j in 0..64 {
-            let k = (i * 64) + j;
-            blocks_out[k] = m[k] ^ key_block[j];
-        }
-        ctr += U32(1);
-    }
-    // Last block might not be full
-    if rem != 0 {
-        let key_block = block(key, ctr, iv);
-        for i in 0..rem {
-            let k = (n_blocks * 64) + i;
-            blocks_out[k] = m[k] ^ key_block[i];
+    let mut blocks_out = ByteSeq::new();
+    for msg_block in m.chunks(64) {
+        // TODO: could be simplified
+        if msg_block.len() == 64 {
+            let key_block = block(key, ctr, iv);
+            blocks_out = blocks_out.push(StateBytes::from(msg_block) ^ key_block);
+            ctr += U32(1);
+        } else {
+            let key_block = block(key, ctr, iv);
+            blocks_out = blocks_out.push_sub(StateBytes::from(msg_block) ^ key_block, 0, msg_block.len());
         }
     }
     Ok(blocks_out)

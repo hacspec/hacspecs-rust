@@ -51,7 +51,7 @@ fn mix(v: DoubleState, a: usize, b: usize, c: usize, d: usize, x: U64, y: U64) -
 
 // TODO: add test case where counter wraps
 fn inc_counter(t: Counter, x: u64) -> Counter {
-    let mut result: Counter = Counter([0u64; 2]);
+    let mut result: Counter = Counter([0; 2]);
     result[0] = t[0] + x;
     if result[0] < x {
         result[1] = t[1] + 1u64;
@@ -59,6 +59,7 @@ fn inc_counter(t: Counter, x: u64) -> Counter {
     result
 }
 
+// TODO: move to library
 fn make_u64array(h: Buffer) -> DoubleState {
     let mut result = DoubleState::new();
     for i in 0..16 {
@@ -83,11 +84,10 @@ fn compress(h: State, m: Buffer, t: Counter, last_block: bool) -> State {
     // Prepare.
     v = v.update_sub(0, h, 0, 8);
     v = v.update_sub(8, IV, 0, 8);
-    let foo0: u64 = t[0];
-    let foo1: u64 = t[1];
-    v[12] ^= U64::classify(foo0);
-    v[13] ^= U64::classify(foo1);
+    v[12] ^= U64(t[0]);
+    v[13] ^= U64(t[1]);
     if last_block {
+        // TODO: why do we need the type here?
         let old_v: U64 = v[14];
         v[14] = !old_v;
     }
@@ -119,6 +119,7 @@ fn compress(h: State, m: Buffer, t: Counter, last_block: bool) -> State {
     compressed
 }
 
+// TODO: move to library
 fn get_byte(x: U64, i: usize) -> U8 {
     match i {
         0 => U8::from(x & U64(0xFF)),
@@ -139,22 +140,17 @@ pub fn blake2b(data: ByteSeq) -> Digest {
     h[0] = h[0] ^ U64(0x0101_0000) ^ U64(64);
 
     let mut t = Counter([0; 2]);
-    let blocks = data.len() / 128;
-    for i in 0..blocks {
-        let m = Buffer::from_sub_pad(data.clone(), i * 128..i * 128 + 128);
-        t = inc_counter(t, 128);
-        h = compress(h, m, t, false);
+    for block in data.chunks(128) {
+        if block.len() == 128 {
+            t = inc_counter(t, 128);
+            h = compress(h, Buffer::from(block), t, false);
+        } else {
+            // Pad last bits of data to a full block.
+            t = inc_counter(t, block.len() as u64);
+            h = compress(h, Buffer::from(block), t, true);
+        }
     }
 
-    // Pad last bits of data to a full block.
-    let mut m = Buffer::new();
-    let remaining_bytes = data.len() - 128 * blocks;
-    let remaining_start = data.len() - remaining_bytes;
-    t = inc_counter(t, remaining_bytes as u64);
-    for (j, i) in (remaining_start..(remaining_start + remaining_bytes)).enumerate() {
-        m[j] = data[i];
-    }
-    h = compress(h, m, t, true);
 
     // We transform 8*u64 into 64*u8
     let mut d = Digest::new();

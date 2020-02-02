@@ -28,7 +28,6 @@ fn pad_aad_msg(aad: ByteSeq, msg: ByteSeq) -> ByteSeq {
     padded_msg
 }
 
-// FIXME: fix type conversions :(
 pub fn encrypt(key: aes::Key, iv: aes::Nonce, aad: ByteSeq, msg: ByteSeq) -> (ByteSeq, Tag) {
     let iv0 = aes::Nonce::new();
 

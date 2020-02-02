@@ -119,7 +119,6 @@ fn aes_enc_last(state: Block, round_key: Key) -> Block {
 fn rounds(state: Block, key: Bytes144) -> Block {
     let mut out = state;
     for key_block in key.chunks(16) {
-        // TODO: we would want chunks_exact here?
         out = aes_enc(out, Key::from(key_block));
     }
     out
