@@ -67,7 +67,7 @@ fn shift_rows(state: Block) -> Block {
 fn xtime(x: U8) -> U8 {
     let x1 = x << 1;
     let x7 = x >> 7;
-    let x71 = x7 & U8(1);
+    let x71 = x7 & U8(0x01);
     let x711b = x71 * U8(0x1b);
     x1 ^ x711b
 }
@@ -98,7 +98,7 @@ fn mix_columns(state: Block) -> Block {
 fn add_round_key(state: Block, key: Key) -> Block {
     let mut out = state;
     for i in 0..16 {
-    out[i] ^= key[i];
+        out[i] ^= key[i];
     }
     out
 }
@@ -118,8 +118,9 @@ fn aes_enc_last(state: Block, round_key: Key) -> Block {
 
 fn rounds(state: Block, key: Bytes144) -> Block {
     let mut out = state;
-    for i in 0..9 {
-        out = aes_enc(out, Key::from_sub(key, 16 * i..16 * i + 16));
+    for key_block in key.chunks(16) {
+        // TODO: we would want chunks_exact here?
+        out = aes_enc(out, Key::from(key_block));
     }
     out
 }
@@ -134,15 +135,15 @@ fn block_cipher(input: Block, key: Bytes176) -> Block {
 }
 
 fn rotate_word(w: Word) -> Word {
-    Word([w[1usize], w[2usize], w[3usize], w[0usize]])
+    Word([w[1], w[2], w[3], w[0]])
 }
 
 fn sub_word(w: Word) -> Word {
     Word([
-        SBOX[U8::declassify(w[0usize]) as usize],
-        SBOX[U8::declassify(w[1usize]) as usize],
-        SBOX[U8::declassify(w[2usize]) as usize],
-        SBOX[U8::declassify(w[3usize]) as usize],
+        SBOX[usize::from(w[0])],
+        SBOX[usize::from(w[1])],
+        SBOX[usize::from(w[2])],
+        SBOX[usize::from(w[3])],
     ])
 }
 
@@ -166,9 +167,7 @@ fn key_expansion_word(w0: Word, w1: Word, i: usize) -> Word {
 }
 
 fn key_expansion(key: Key) -> Bytes176 {
-    let mut key_ex = Bytes176::new();
-    // TODO: get rid of all `into`
-    key_ex = key_ex.update(0, key);
+    let mut key_ex = Bytes176::from(key.raw());
     let mut i: usize;
     for j in 0..40 {
         i = j + 4;
@@ -203,25 +202,22 @@ pub(crate) fn xor_block(block: Block, keyblock: Block) -> Block {
 }
 
 fn aes128_counter_mode(key: Key, nonce: Nonce, counter: U32, msg: ByteSeq) -> ByteSeq {
-    let l = msg.len();
-    let n_blocks: usize = l / BLOCKSIZE;
-    let rem = l % BLOCKSIZE;
     let mut ctr = counter;
-    let mut blocks_out = ByteSeq::new_len(l);
-    for i in 0..n_blocks {
-        let keyblock = aes128_ctr_keyblock(key, nonce, ctr);
-        let k = i * BLOCKSIZE;
-        blocks_out = blocks_out.update(
-            k,
-            xor_block(Block::from_sub_pad(msg.clone(), k..k + BLOCKSIZE), keyblock),
-        );
-        ctr += U32(1);
+    let mut blocks_out = ByteSeq::new();
+    for msg_block in msg.chunks(BLOCKSIZE) {
+        if msg_block.len() == BLOCKSIZE {
+            let key_block = aes128_ctr_keyblock(key, nonce, ctr);
+            blocks_out = blocks_out.push(
+                xor_block(Block::from(msg_block), key_block),
+            );
+            ctr += U32(1);
+        } else {
+            // Last block that needs padding
+            let keyblock = aes128_ctr_keyblock(key, nonce, ctr);
+            let last_block = Block::from(msg_block);
+            blocks_out = blocks_out.push_sub(xor_block(last_block, keyblock), 0, msg_block.len());
+        }
     }
-    let keyblock = aes128_ctr_keyblock(key, nonce, ctr);
-    let k = n_blocks * BLOCKSIZE;
-    let mut last_block = Block::new();
-    last_block = last_block.update_sub(0, msg, k, rem);
-    blocks_out = blocks_out.update_sub(k, xor_block(last_block, keyblock), 0, rem);
     blocks_out
 }
 
