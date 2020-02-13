@@ -137,7 +137,7 @@
 // }
 
 // fn zero(len: usize) -> Bytes {
-//     Bytes::new_len(len)
+//     Bytes::new(len)
 // }
 
 // // TODO: actually fail or something
@@ -192,7 +192,7 @@
 //     psk_id_hash: MD,
 //     info_hash: MD,
 // ) -> Bytes {
-//     let mut out = Bytes::new_len(0);
+//     let mut out = Bytes::new(0);
 //     out.push(mode as u8);
 //     out.extend_from_slice(&ciphersuite);
 //     out.extend_from_slice(enc.raw());
@@ -212,7 +212,7 @@
 // }
 
 // fn concat_label(label: String, context: Bytes) -> Bytes {
-//     let mut out = Bytes::new_len(0);
+//     let mut out = Bytes::new(0);
 //     // TODO: this is UTF-8 string to bytes conversion.
 //     out.extend_from_slice(label.as_bytes());
 //     println!("{:x?}", out);

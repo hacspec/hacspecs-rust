@@ -202,7 +202,7 @@ pub(crate) fn xor_block(block: Block, keyblock: Block) -> Block {
 
 fn aes128_counter_mode(key: Key, nonce: Nonce, counter: U32, msg: ByteSeq) -> ByteSeq {
     let mut ctr = counter;
-    let mut blocks_out = ByteSeq::new();
+    let mut blocks_out = ByteSeq::new(msg.len());
     for msg_block in msg.chunks(BLOCKSIZE) {
         if msg_block.len() == BLOCKSIZE {
             let key_block = aes128_ctr_keyblock(key, nonce, ctr);

@@ -20,7 +20,7 @@ fn pad_aad_msg(aad: ByteSeq, msg: ByteSeq) -> ByteSeq {
     } else {
         lmsg + (16 - (lmsg % 16))
     };
-    let mut padded_msg = ByteSeq::new_len(pad_aad + pad_msg + 16);
+    let mut padded_msg = ByteSeq::new(pad_aad + pad_msg + 16);
     padded_msg = padded_msg.update(0, aad);
     padded_msg = padded_msg.update(pad_aad, msg);
     padded_msg = padded_msg.update(pad_aad + pad_msg, u64_to_be_bytes(U64(laad as u64) * U64(8)));

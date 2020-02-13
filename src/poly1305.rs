@@ -49,7 +49,7 @@ fn poly_inner(m: ByteSeq, r: FieldElement) -> FieldElement {
     let m_len = m.len();
     for i in (0..m_len).step_by(BLOCKSIZE) {
         let block_len = min(BLOCKSIZE, m_len - i);
-        let mut b = Seq::new_len(block_len);
+        let mut b = Seq::new(block_len);
         b = b.update_sub(0, m.clone(), i, block_len);
         acc = (acc + encode(b)) * r;
     }
