@@ -203,7 +203,7 @@ pub(crate) fn xor_block(block: Block, keyblock: Block) -> Block {
 fn aes128_counter_mode(key: Key, nonce: Nonce, counter: U32, msg: ByteSeq) -> ByteSeq {
     let mut ctr = counter;
     let mut blocks_out = ByteSeq::new(msg.len());
-    for msg_block in msg.chunks(BLOCKSIZE) {
+    for (block_len, msg_block) in msg.chunks(BLOCKSIZE) {
         if msg_block.len() == BLOCKSIZE {
             let key_block = aes128_ctr_keyblock(key, nonce, ctr);
             blocks_out = blocks_out.push(
@@ -214,7 +214,7 @@ fn aes128_counter_mode(key: Key, nonce: Nonce, counter: U32, msg: ByteSeq) -> By
             // Last block that needs padding
             let keyblock = aes128_ctr_keyblock(key, nonce, ctr);
             let last_block = Block::from(msg_block);
-            blocks_out = blocks_out.push_sub(xor_block(last_block, keyblock), 0, msg_block.len());
+            blocks_out = blocks_out.push_sub(xor_block(last_block, keyblock), 0, block_len);
         }
     }
     blocks_out

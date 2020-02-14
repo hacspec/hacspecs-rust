@@ -34,7 +34,7 @@ pub fn quarter_round(a: usize, b: usize, c: usize, d: usize, state: State) -> St
     line(c, d, b, 7, state)
 }
 
-fn double_round( state: State) -> State {
+fn double_round(state: State) -> State {
     let state = quarter_round(0, 4, 8, 12, state);
     let state = quarter_round(1, 5, 9, 13, state);
     let state = quarter_round(2, 6, 10, 14, state);
@@ -87,16 +87,10 @@ pub fn block(key: Key, ctr: U32, iv: IV) -> StateBytes {
 pub fn chacha(key: Key, iv: IV, m: ByteSeq) -> Result<ByteSeq, String> {
     let mut ctr = U32(1);
     let mut blocks_out = ByteSeq::new(m.len());
-    for msg_block in m.chunks(64) {
-        // TODO: could be simplified
-        if msg_block.len() == 64 {
-            let key_block = block(key, ctr, iv);
-            blocks_out = blocks_out.push(StateBytes::from(msg_block) ^ key_block);
-            ctr += U32(1);
-        } else {
-            let key_block = block(key, ctr, iv);
-            blocks_out = blocks_out.push_sub(StateBytes::from(msg_block) ^ key_block, 0, msg_block.len());
-        }
+    for (block_len, msg_block) in m.chunks(64) {
+        let key_block = block(key, ctr, iv);
+        blocks_out = blocks_out.push_sub(StateBytes::from(msg_block) ^ key_block, 0, block_len);
+        ctr += U32(1);
     }
     Ok(blocks_out)
 }

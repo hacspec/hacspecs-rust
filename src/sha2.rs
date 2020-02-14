@@ -113,14 +113,14 @@ fn compress(block: Block, h_in: Hash) -> Hash {
 pub fn hash(msg: ByteSeq) -> Digest {
     let mut h = Hash::from([0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a,
                               0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19]);
-    for block in msg.chunks(BLOCK_SIZE) {
-        if block.len() < BLOCK_SIZE {
+    for (block_len, block) in msg.chunks(BLOCK_SIZE) {
+        if block_len < BLOCK_SIZE {
             // Add padding for last block
             let mut last_block = Block::new();
             last_block = last_block.update(0, Block::from(block));
-            last_block[block.len()] = U8(0x80);
+            last_block[block_len] = U8(0x80);
             let len_bist: U64 = (msg.len() * 8).into();
-            if block.len() < BLOCK_SIZE - LEN_SIZE {
+            if block_len < BLOCK_SIZE - LEN_SIZE {
                 last_block = last_block.update(BLOCK_SIZE - LEN_SIZE, u64_to_be_bytes(len_bist));
                 h = compress(last_block, h);
             } else {

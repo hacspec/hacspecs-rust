@@ -140,13 +140,13 @@ pub fn blake2b(data: ByteSeq) -> Digest {
     h[0] = h[0] ^ U64(0x0101_0000) ^ U64(64);
 
     let mut t = Counter([0; 2]);
-    for block in data.chunks(128) {
-        if block.len() == 128 {
+    for (block_len, block) in data.chunks(128) {
+        if block_len == 128 {
             t = inc_counter(t, 128);
             h = compress(h, Buffer::from(block), t, false);
         } else {
             // Pad last bits of data to a full block.
-            t = inc_counter(t, block.len() as u64);
+            t = inc_counter(t, block_len as u64);
             h = compress(h, Buffer::from(block), t, true);
         }
     }
