@@ -41,7 +41,7 @@ const RCON: RCon = RCon(secret_bytes!([
 
 fn sub_bytes(state: Block) -> Block {
     let mut st = state;
-    for i in 0..16 {
+    for i in 0..BLOCKSIZE {
         st[i] = SBOX[U8::declassify(state[i])];
     }
     st
@@ -97,7 +97,7 @@ fn mix_columns(state: Block) -> Block {
 
 fn add_round_key(state: Block, key: Key) -> Block {
     let mut out = state;
-    for i in 0..16 {
+    for i in 0..BLOCKSIZE {
         out[i] ^= key[i];
     }
     out
@@ -118,7 +118,7 @@ fn aes_enc_last(state: Block, round_key: Key) -> Block {
 
 fn rounds(state: Block, key: Bytes144) -> Block {
     let mut out = state;
-    for key_block in key.chunks(16) {
+    for (_, key_block) in key.chunks(BLOCKSIZE) {
         out = aes_enc(out, Key::from(key_block));
     }
     out
