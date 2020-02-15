@@ -1,12 +1,12 @@
 // Import hacspec and all needed definitions.
 use hacspec::prelude::*;
 
-array!(State, 8, U64, u64);
-array!(DoubleState, 16, U64, u64);
-public_array!(Counter, 2, u64);
+array!(State, 8, U64);
+array!(DoubleState, 16, U64);
+array!(Counter, 2, u64);
 bytes!(Buffer, 128);
 bytes!(Digest, 64);
-public_array!(Sigma, 16 * 12, usize);
+array!(Sigma, 16 * 12, usize);
 
 static SIGMA: Sigma = Sigma([
     0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 14, 10, 4, 8, 9, 15, 13, 6, 1, 12, 0, 2,

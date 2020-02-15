@@ -17,8 +17,9 @@ type WordT = U32;
 bytes!(Block, BLOCK_SIZE);
 bytes!(OpTableType, 12);
 bytes!(Digest, HASH_SIZE);
-array!(RoundConstantsTable, K_SIZE, U32, u32);
-array!(Hash, 8, WordT, u32);
+array!(RoundConstantsTable, K_SIZE, U32);
+// FIXME: for some reason we can't use WorT here.
+array!(Hash, 8, U32);
 
 
 fn ch(x: WordT, y: WordT, z: WordT) -> WordT {
