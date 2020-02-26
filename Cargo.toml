@@ -12,9 +12,9 @@ paste = "0.1"
 
 hacspec = { git = "https://github.com/hacspec/hacspec-rust" }
 secret_integers = { git = "https://github.com/hacspec/rust-secret-integers" }
-abstract_integers = "0.1.3"
+abstract_integers = { git = "https://github.com/hacspec/rust-abstract-integers" }
 
 # Local dependencies for development
-# secret_integers = { path = "../rust-secret-integers" }
 # hacspec = { path = "../hacspec-rust" }
+# secret_integers = { path = "../rust-secret-integers" }
 # abstract_integers = { path = "../rust-abstract-integers" }
