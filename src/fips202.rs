@@ -89,7 +89,7 @@ fn iota(s: State, rndconst: u64) -> State {
     v
 }
 
-pub fn keccakf1600(s: State) -> State {
+fn keccakf1600(s: State) -> State {
     let mut v = s;
     for i in 0..ROUNDS{
         v = theta(v);
@@ -101,13 +101,34 @@ pub fn keccakf1600(s: State) -> State {
     v
 }
 
+fn xor_byte_into_state(s: &mut State, byte: U8, pos: usize)
+{
+    let w = pos >> 3;
+    let o = 8*((pos & 3) as u32);
+    s[w] ^= U64::from(byte) << o;
+}
+
+fn absorb_block(s: State, block: ByteSeq) -> State {
+    let mut v = s;
+    for i in 0..block.len() {
+        xor_byte_into_state(&mut s, U8::classify(42 as u8), i); //TODO replace 42 with correct byte
+    }
+    keccakf1600(v)
+}
+
 fn keccak(rate: usize, data: ByteSeq, p: u8, outbytes: usize) -> ByteSeq {
     let mut out = ByteSeq::new(outbytes);
     let mut s   = State::new();
     
     for (block_len, block) in data.chunks(rate) {
-        // TODO: implement
+        if block_len == rate {
+            s = absorb_block(s, block);
+        }
+        else {
+            // TODO: pad partial block and absorb
+        }
     }
+    // TODO: fill out
     out
 }
 
