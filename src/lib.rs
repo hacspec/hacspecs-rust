@@ -17,3 +17,4 @@ pub mod poly1305;
 pub mod sha2;
 pub mod hkdf;
 pub mod hmac;
+pub mod fips202;
