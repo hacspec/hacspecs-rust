@@ -34,9 +34,10 @@ fn decode_scalar(s: SerializedScalar) -> Scalar {
 }
 
 fn decode_point(u: SerializedPoint) -> Point {
-    let u_ = Scalar::from_byte_seq_le(u);
+    let mut u_ = u;
+    u_[31] &= U8(127);
     (
-        FieldElement::from_byte_seq_le(u_.to_byte_seq_le()),
+        FieldElement::from_byte_seq_le(u_),
         FieldElement::from_literal(1),
     )
 }
@@ -47,7 +48,7 @@ fn encode_point(p: Point) -> SerializedPoint {
     SerializedPoint::copy_pad(b.to_byte_seq_le())
 }
 
-fn point_add_and_double(q: Point, nq: Point, nqp1: Point) -> (Point, Point) {
+fn point_add_and_double(q: Point, (nq, nqp1): (Point, Point)) -> (Point, Point) {
     let (x_1, _z_1) = q;
     let (x_2, z_2) = nq;
     let (x_3, z_3) = nqp1;
@@ -69,18 +70,21 @@ fn point_add_and_double(q: Point, nq: Point, nqp1: Point) -> (Point, Point) {
     ((x_2, z_2), (x_3, z_3))
 }
 
+fn swap(x: (Point, Point)) -> (Point, Point) {
+    (x.1, x.0)
+}
+
 fn montgomery_ladder(k: Scalar, init: Point) -> Point {
-    let mut acc: (Point, Point) = (
-        (FieldElement::from_literal(1), FieldElement::from_literal(0)),
-        init,
-    );
+    // TODO: let inf = (FieldElement::one(), FieldElement::zero());
+    let inf = (FieldElement::from_literal(1), FieldElement::from_literal(0));
+    let mut acc: (Point, Point) = (inf, init);
     for i in 0..256 {
         if k.bit(255 - i) {
-            // TODO: this is ugly
-            let tmp = point_add_and_double(init, acc.1, acc.0);
-            acc = (tmp.1, tmp.0);
+            acc = swap(acc);
+            acc = point_add_and_double(init, acc);
+            acc = swap(acc);
         } else {
-            acc = point_add_and_double(init, acc.0, acc.1);
+            acc = point_add_and_double(init, acc);
         }
     }
     acc.0

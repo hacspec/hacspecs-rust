@@ -18,16 +18,16 @@ pub fn state_to_bytes(x: State) -> StateBytes {
     r
 }
 
-fn line(a: usize, b: usize, d: usize, s: usize, m: State) -> State {
+fn line(a: u32, b: u32, d: u32, s: u32, m: State) -> State {
     let mut state = m;
     // TODO: we can't write += or ^= here right now :(
     state[a] = state[a] + state[b];
     state[d] = state[d] ^ state[a];
-    state[d] = state[d].rotate_left(s as u32);
+    state[d] = state[d].rotate_left(s);
     state
 }
 
-pub fn quarter_round(a: usize, b: usize, c: usize, d: usize, state: State) -> State {
+pub fn quarter_round(a: u32, b: u32, c: u32, d: u32, state: State) -> State {
     let state = line(a, b, d, 16, state);
     let state = line(c, d, b, 12, state);
     let state = line(a, b, d, 8, state);
