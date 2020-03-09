@@ -2,12 +2,12 @@
 use hacspec::prelude::*;
 
 const ROUNDS:usize = 24;
-const SHA3224_RATE:usize  = 144;
-const SHA3256_RATE:usize  = 136;
-const SHA3384_RATE:usize  = 104;
-const SHA3512_RATE:usize  = 72;
-const SHAKE128_RATE:usize = 168;
-const SHAKE256_RATE:usize = 136;
+pub const SHA3224_RATE:usize  = 144;
+pub const SHA3256_RATE:usize  = 136;
+pub const SHA3384_RATE:usize  = 104;
+pub const SHA3512_RATE:usize  = 72;
+pub const SHAKE128_RATE:usize = 168;
+pub const SHAKE256_RATE:usize = 136;
 
 array!(State, 25, U64);
 array!(Row, 5, U64);
@@ -101,35 +101,49 @@ fn keccakf1600(s: State) -> State {
     v
 }
 
-fn xor_byte_into_state(s: &mut State, byte: U8, pos: usize)
-{
-    let w = pos >> 3;
-    let o = 8*((pos & 3) as u32);
-    s[w] ^= U64::from(byte) << o;
-}
-
-fn absorb_block(s: State, block: ByteSeq) -> State {
-    let mut v = s;
-    for i in 0..block.len() {
-        xor_byte_into_state(&mut s, U8::classify(42 as u8), i); //TODO replace 42 with correct byte
+fn absorb_block(mut s: State, block: ByteSeq) -> State {
+    for (i, b) in block.iter().enumerate() {
+        let w = i >> 3;
+        let o = 8*((i & 7) as u32);
+        s[w] ^= U64::from(*b) << o;
     }
-    keccakf1600(v)
+    keccakf1600(s)
 }
 
-fn keccak(rate: usize, data: ByteSeq, p: u8, outbytes: usize) -> ByteSeq {
+fn squeeze_block(s: State, rate: usize) -> ByteSeq {
+    let mut out = ByteSeq::new(rate);
+    for i in 0..rate {                  /* XXX: This wants iter_mut in ByteSeq */
+        let w = i >> 3;
+        let o = 8*((i & 7) as u32);
+        let b = (s[w] >> o) & U64::classify(0xffu64);
+        out[i] = b.into();
+    }
+    out
+}
+
+fn keccak(rate: usize, data: ByteSeq, p: u8, mut outbytes: usize) -> ByteSeq {
     let mut out = ByteSeq::new(outbytes);
+    let mut buf = ByteSeq::new(rate);
     let mut s   = State::new();
-    
+
     for (block_len, block) in data.chunks(rate) {
         if block_len == rate {
             s = absorb_block(s, block);
         }
         else {
-            // TODO: pad partial block and absorb
+            buf = buf.push(block);
         }
     }
-    // TODO: fill out
-    out
+    buf = buf.push(ByteSeq::from_array(&[U8::classify(p)]));
+    buf[rate-1] |= U8::classify(128);
+    s = absorb_block(s, buf);
+
+    while outbytes >= rate {
+        out = out.push(squeeze_block(s, rate));
+        s = keccakf1600(s);
+        outbytes -= rate;
+    }
+    out.push(squeeze_block(s, outbytes))
 }
 
 pub fn sha3224(data: ByteSeq) -> Digest224 {
