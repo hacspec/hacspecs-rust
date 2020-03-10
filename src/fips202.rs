@@ -49,13 +49,12 @@ fn theta(mut s: State) -> State {
     s
 }
 
-fn rho(s: State) -> State {
-    let mut v = State::new();
+fn rho(mut s: State) -> State {
     for i in 0..25 {
         let u:U64 = s[i];
-        v[i] = u.rotate_left(ROTC[i]);
+        s[i] = u.rotate_left(ROTC[i]);
     }
-    v
+    s
 }
 
 fn pi(s: State) -> State {
