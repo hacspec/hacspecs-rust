@@ -34,9 +34,8 @@ static PI:[usize;25] = [
 ];
 
 
-fn theta(s: State) -> State {
+fn theta(mut s: State) -> State {
     let mut b = Row::new();
-    let mut v = s;
     for i in 0..5 {
         b[i] = s[i] ^ s[i + 5] ^ s[i + 10] ^ s[i + 15] ^ s[i + 20];
     }
@@ -44,10 +43,10 @@ fn theta(s: State) -> State {
         let u:U64 = b[(i + 1) % 5];
         let t = b[(i + 4) % 5] ^ u.rotate_left(1);
         for j in 0..5 {
-            v[5 * j + i] ^= t;
+            s[5 * j + i] ^= t;
         }
     }
-    v
+    s
 }
 
 fn rho(s: State) -> State {
@@ -67,38 +66,34 @@ fn pi(s: State) -> State {
     v
 }
 
-fn chi(s: State) -> State {
+fn chi(mut s: State) -> State {
     let mut b = Row::new();
-    let mut v = s;
-
     for i in 0..5 {
         for j in 0..5 {
-            b[j] = v[5*i+j];
+            b[j] = s[5*i+j];
         }
         for j in 0..5 {
             let u:U64 = b[(j + 1) % 5];
-            v[5*i+j] ^= (!u) & b[(j + 2) % 5];
+            s[5*i+j] ^= (!u) & b[(j + 2) % 5];
         }
     }
-    v
+    s
 }
 
-fn iota(s: State, rndconst: u64) -> State { 
-    let mut v = s;
-    v[0] ^= U64::classify(rndconst);
-    v
+fn iota(mut s: State, rndconst: u64) -> State { 
+    s[0] ^= U64::classify(rndconst);
+    s
 }
 
-fn keccakf1600(s: State) -> State {
-    let mut v = s;
+fn keccakf1600(mut s: State) -> State {
     for i in 0..ROUNDS{
-        v = theta(v);
-        v = rho(v);
-        v = pi(v);
-        v = chi(v);
-        v = iota(v, ROUNDCONSTANTS[i]);
+        s = theta(s);
+        s = rho(s);
+        s = pi(s);
+        s = chi(s);
+        s = iota(s, ROUNDCONSTANTS[i]);
     }
-    v
+    s
 }
 
 fn absorb_block(mut s: State, block: ByteSeq) -> State {
@@ -110,19 +105,22 @@ fn absorb_block(mut s: State, block: ByteSeq) -> State {
     keccakf1600(s)
 }
 
-fn squeeze_block(s: State, rate: usize) -> ByteSeq {
-    let mut out = ByteSeq::new(rate);
-    for i in 0..rate {                  /* XXX: This wants iter_mut in ByteSeq */
-        let w = i >> 3;
-        let o = 8*((i & 7) as u32);
+fn squeeze(mut s: State, nbytes: usize, rate: usize) -> ByteSeq {
+    let mut out = ByteSeq::new(nbytes);
+    for i in 0..nbytes {
+        let pos = i % rate;
+        let w = pos >> 3;
+        let o = 8*((pos & 7) as u32);
         let b = (s[w] >> o) & U64::classify(0xffu64);
         out[i] = b.into();
+        if ((i+1) % rate) == 0 {
+            s = keccakf1600(s);
+        }
     }
     out
 }
 
-fn keccak(rate: usize, data: ByteSeq, p: u8, mut outbytes: usize) -> ByteSeq {
-    let mut out = ByteSeq::new(outbytes);
+fn keccak(rate: usize, data: ByteSeq, p: u8, outbytes: usize) -> ByteSeq {
     let mut buf = ByteSeq::new(rate);
     let mut s   = State::new();
 
@@ -138,12 +136,7 @@ fn keccak(rate: usize, data: ByteSeq, p: u8, mut outbytes: usize) -> ByteSeq {
     buf[rate-1] |= U8::classify(128);
     s = absorb_block(s, buf);
 
-    while outbytes >= rate {
-        out = out.push(squeeze_block(s, rate));
-        s = keccakf1600(s);
-        outbytes -= rate;
-    }
-    out.push(squeeze_block(s, outbytes))
+    squeeze(s, outbytes, rate)
 }
 
 pub fn sha3224(data: ByteSeq) -> Digest224 {
@@ -176,7 +169,6 @@ pub fn shake256(data: ByteSeq, outlen: usize) -> ByteSeq {
 
 
 #[test]
-
 fn test_keccakf1600() {
     let s:State = State(secret_array!(U64,[
                                       0x5ba446eba89b9b78, 0x6ef6eb8a586fb342, 0x85cb3d1fcec58036, 0xa59848fabf68003d,
